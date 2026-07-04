@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Latte & Letters</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon">AE</div>
+      <span class="logo-text">Latte & Letters</span>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div>
+          <div class="user-name" id="userName">Loading...</div>
+          <div class="user-role" id="userRole">-</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-bar">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSidebar()">&#9776; Menu</button>
+      <div class="top-bar-copy">
+        <h2 class="page-title">Dashboard</h2>
+        <p class="page-subtitle">Track cafe-library staff attendance, shift trends, alerts, and notifications in one place.</p>
+      </div>
+      <div class="top-bar-right">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="refreshDashboard()">Refresh</button>
+        <button type="button" class="btn btn-primary btn-sm notify-trigger" onclick="toggleNotifications()" id="notifyBtn">
+          Notifications <span class="inline-badge hidden" id="notifyBadge">0</span>
+        </button>
+        <div class="notify-panel hidden" id="notifyPanel">
+          <div class="notify-header">
+            <span>Notifications <small id="notifyUnreadMeta">0 total • 0 unread</small></span>
+            <button type="button" class="btn btn-secondary btn-xs" onclick="markAllRead()">Mark all read</button>
+          </div>
+          <div id="notifyList"><p class="empty-msg">No new notifications</p></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-area dashboard-content">
+      <section class="dashboard-surface report-hero dashboard-range-bar">
+        <div class="report-hero-copy dashboard-range-copy">
+          <div class="section-kicker">Date Range</div>
+          <h3 class="chart-panel-title">Dashboard Period</h3>
+          <p class="chart-panel-note" id="rangeSummary">Showing dashboard activity for the selected range.</p>
+        </div>
+        <div class="filter-bar report-filter-bar dashboard-range-controls report-date-row">
+          <div class="form-group">
+            <label for="dashFrom">From</label>
+            <input type="date" id="dashFrom">
+          </div>
+          <div class="form-group">
+            <label for="dashTo">To</label>
+            <input type="date" id="dashTo">
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="setDashboardToday()">Today</button>
+        </div>
+      </section>
+
+      <div class="tabs dashboard-tabs" id="dashboardTabs">
+        <button type="button" class="tab active" data-dash-tab="overview" onclick="switchDashboardTab('overview', this)">Overview</button>
+        <button type="button" class="tab" data-dash-tab="analytics" onclick="switchDashboardTab('analytics', this)">Analytics</button>
+        <button type="button" class="tab" data-dash-tab="watchlist" onclick="switchDashboardTab('watchlist', this)">Watchlist</button>
+      </div>
+
+      <div id="dashboard-tab-overview" class="tab-content dashboard-tab-panel active">
+        <section class="dashboard-hero">
+          <div class="dashboard-surface hero-panel">
+            <div class="hero-copy">
+              <h1 class="hero-title">Welcome back, <span id="heroUserName">User</span>.</h1>
+              <p class="hero-description" id="heroDescription">
+                Here's a quick overview of Latte & Letters staff attendance status.
+              </p>
+              <div class="hero-chip-row">
+                <span class="hero-chip" id="heroDateChip">Today</span>
+                <span class="hero-chip" id="heroHealthChip">System ready</span>
+                <span class="hero-chip" id="heroFocusChip">Focus: attendance momentum</span>
+              </div>
+            </div>
+            <div class="hero-actions">
+            <button type="button" class="btn btn-primary" onclick="scrollToSection('trendSection')">View Trends</button>
+            <button type="button" class="btn btn-secondary" onclick="scrollToSection('alertsSection')">Jump to Watchlist</button>
+            </div>
+          </div>
+
+          <div class="dashboard-surface pulse-panel">
+            <div class="section-kicker" id="pulseRangeLabel">Selected Range</div>
+            <div class="pulse-rate" id="heroRate">--%</div>
+            <div class="pulse-caption" id="heroRateCaption">Measuring current attendance flow.</div>
+            <div class="pulse-mini-grid">
+              <div class="pulse-mini-card">
+                <span class="pulse-mini-label">Present</span>
+                <strong id="heroPresent">0</strong>
+              </div>
+              <div class="pulse-mini-card">
+                <span class="pulse-mini-label">Absent</span>
+                <strong id="heroAbsent">0</strong>
+              </div>
+              <div class="pulse-mini-card">
+                <span class="pulse-mini-label">Focus</span>
+                <strong id="heroAlertCount">0</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="stats-grid dashboard-stats">
+          <div class="stat-card blue stat-card-rich">
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="stat-icon-svg">
+                <circle cx="8.5" cy="9" r="2.6"></circle>
+                <circle cx="15.8" cy="10" r="2.1"></circle>
+                <path d="M4.3 18c1.2-2.8 3.3-4.3 5.9-4.3s4.7 1.5 5.9 4.3"></path>
+                <path d="M13.6 17.6c.7-1.8 1.9-2.8 3.6-2.8 1.3 0 2.4.6 3.2 1.8"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-value" id="totalStudents">-</div>
+              <div class="stat-label">Total Staff</div>
+              <div class="stat-subtext" id="studentsNote">Staff roster synced</div>
+            </div>
+          </div>
+          <div class="stat-card green stat-card-rich">
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="stat-icon-svg">
+                <rect x="4" y="5.5" width="16" height="10.5" rx="2.4"></rect>
+                <path d="M8 19h8"></path>
+                <path d="M12 16v3"></path>
+                <path d="M8 10.5h8"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-value" id="totalTeachers">-</div>
+              <div class="stat-label">Supervisors</div>
+              <div class="stat-subtext" id="teachersNote">Shift visibility</div>
+            </div>
+          </div>
+          <div class="stat-card teal stat-card-rich">
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="stat-icon-svg">
+                <circle cx="12" cy="12" r="8"></circle>
+                <path d="M8.5 12.2 10.8 14.6 15.8 9.4"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-value" id="presentToday">-</div>
+              <div class="stat-label">Present Records</div>
+              <div class="stat-subtext" id="presentNote">Staff checked in</div>
+            </div>
+          </div>
+          <div class="stat-card red stat-card-rich">
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="stat-icon-svg">
+                <circle cx="12" cy="12" r="8"></circle>
+                <path d="M9.2 9.2 14.8 14.8"></path>
+                <path d="M14.8 9.2 9.2 14.8"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-value" id="absentToday">-</div>
+              <div class="stat-label">Absent Records</div>
+              <div class="stat-subtext" id="absentNote">Needs follow-up</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="dashboard-tab-analytics" class="tab-content dashboard-tab-panel hidden">
+        <section class="dashboard-main-grid">
+          <div class="dashboard-surface chart-panel chart-panel-wide" id="trendSection">
+            <div class="chart-panel-header">
+              <div>
+                <div class="section-kicker">Attendance Intelligence</div>
+                <h3 class="chart-panel-title" id="trendTitle">Daily Attendance Flow</h3>
+                <p class="chart-panel-note" id="trendSummary">
+                  Hover over points to inspect present versus absent movement over time.
+                </p>
+              </div>
+              <div class="segmented-control" id="trendControls">
+                <button class="active" data-trend="daily" type="button">Daily</button>
+                <button data-trend="weekly" type="button">Weekly</button>
+                <button data-trend="monthly" type="button">Monthly</button>
+              </div>
+            </div>
+            <div class="chart-panel-body chart-panel-body-lg">
+              <canvas id="trendChart"></canvas>
+            </div>
+            <div class="trend-highlights" id="trendHighlights"></div>
+          </div>
+
+          <div class="dashboard-surface chart-panel">
+            <div class="chart-panel-header">
+              <div>
+                <div class="section-kicker">Current Balance</div>
+                <h3 class="chart-panel-title">Attendance Breakdown</h3>
+              </div>
+              <span class="panel-status" id="breakdownStatus">Balanced</span>
+            </div>
+            <div class="chart-panel-body chart-panel-body-sm">
+              <canvas id="todayBreakdownChart"></canvas>
+            </div>
+            <div class="metric-list" id="todayLegend"></div>
+          </div>
+        </section>
+
+        <section class="dashboard-lower-grid">
+          <div class="dashboard-surface chart-panel chart-panel-wide">
+            <div class="chart-panel-header">
+              <div>
+                <div class="section-kicker">Attendance Signal</div>
+                <h3 class="chart-panel-title">Top Attendance Performance</h3>
+                <p class="chart-panel-note">A wider but tighter leaderboard of staff with the strongest attendance rates.</p>
+              </div>
+              <span class="panel-status">Top 8</span>
+            </div>
+            <div class="chart-panel-body chart-panel-body-performance-wide">
+              <canvas id="performanceChart"></canvas>
+            </div>
+          </div>
+
+          <div class="dashboard-secondary-grid">
+            <div class="dashboard-surface chart-panel">
+              <div class="chart-panel-header">
+                <div>
+                  <div class="section-kicker">Momentum</div>
+                  <h3 class="chart-panel-title">Monthly Attendance Rate</h3>
+                  <p class="chart-panel-note">A compact view of attendance movement across the selected range.</p>
+                </div>
+                <span class="panel-status" id="momentumStatus">Stable</span>
+              </div>
+              <div class="chart-panel-body chart-panel-body-momentum-compact">
+                <canvas id="momentumChart"></canvas>
+              </div>
+            </div>
+
+            <div class="dashboard-surface dashboard-stack-card dashboard-insights-panel">
+              <div class="chart-panel-header">
+                <div>
+                  <div class="section-kicker">Insights</div>
+                  <h3 class="chart-panel-title">What Deserves Attention</h3>
+                </div>
+              </div>
+              <div class="insight-list" id="insightList">
+                <p class="empty-msg">Insights will appear once dashboard data loads.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div id="dashboard-tab-watchlist" class="tab-content dashboard-tab-panel hidden">
+        <section class="dashboard-watch-grid">
+          <div class="dashboard-surface alert-card alerts-panel" id="alertsSection">
+            <div class="chart-panel-header">
+              <div>
+                <div class="section-kicker">Watchlist</div>
+                <h3 class="chart-panel-title">Low Attendance Notifications</h3>
+              </div>
+              <span class="panel-status alert" id="alertBadgeStatus">0 Active</span>
+            </div>
+            <div class="filter-bar dashboard-list-filter">
+              <div class="form-group inline"><label>Search</label><input type="text" id="alertSearch" class="search-input" placeholder="Search watchlist..." oninput="renderAlerts()"></div>
+              <div class="form-group inline">
+                <label>Severity</label>
+                <select id="alertSeverityFilter" class="search-input" onchange="renderAlerts()">
+                  <option value="">All Severity</option>
+                  <option value="critical">Critical</option>
+                  <option value="warning">Warning</option>
+                </select>
+              </div>
+            </div>
+            <div id="alertList"><p class="empty-msg">No notifications</p></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/charts.js"></script>
+<script>
+  requireAuth();
+  renderNav();
+
+  const dashboardState = {
+    trendMode: 'daily',
+    payload: null,
+    notifications: [],
+    activeTab: 'overview',
+    rangeFrom: '',
+    rangeTo: ''
+  };
+
+  document.getElementById('heroUserName').textContent = localStorage.getItem('name') || 'User';
+
+  initDashboardRange();
+  bindDashboardTabs();
+  bindTrendControls();
+  bindRangeControls();
+  bindNotificationDismiss();
+  loadDashboard();
+
+  async function loadDashboard(showRefreshToast = false) {
+    const params = new URLSearchParams({
+      from: dashboardState.rangeFrom,
+      to: dashboardState.rangeTo
+    });
+    const data = await API.get(`/api/dashboard?${params.toString()}`);
+    if (!data) {
+      showToast('Could not load dashboard data', 'error');
+      return;
+    }
+
+    dashboardState.payload = data;
+    renderStats(data.stats && data.stats[0] ? data.stats[0] : null);
+    renderAlerts();
+    await loadNotifications();
+    refreshVisibleDashboardTab();
+
+    if (showRefreshToast) showToast('Dashboard refreshed', 'success');
+  }
+
+  async function refreshDashboard() {
+    await loadDashboard(true);
+  }
+
+  function bindRangeControls() {
+    const fromInput = document.getElementById('dashFrom');
+    const toInput = document.getElementById('dashTo');
+
+    [fromInput, toInput].forEach(input => {
+      input.addEventListener('change', () => {
+        updateRangeSummary();
+        if (fromInput.value && toInput.value && fromInput.value <= toInput.value) {
+          applyDashboardRange(false);
+        }
+      });
+    });
+  }
+
+  function initDashboardRange() {
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const from = toIsoDate(monthStart);
+    const to = toIsoDate(today);
+
+    dashboardState.rangeFrom = from;
+    dashboardState.rangeTo = to;
+    document.getElementById('dashFrom').value = from;
+    document.getElementById('dashTo').value = to;
+    updateRangeSummary();
+  }
+
+  async function applyDashboardRange(showRefreshToast = false) {
+    const from = document.getElementById('dashFrom').value;
+    const to = document.getElementById('dashTo').value;
+
+    if (!from || !to) {
+      showToast('Please select both From and To dates', 'error');
+      return;
+    }
+
+    if (from > to) {
+      showToast('The start date must not be later than the end date', 'error');
+      return;
+    }
+
+    dashboardState.rangeFrom = from;
+    dashboardState.rangeTo = to;
+    updateRangeSummary();
+    await loadDashboard(showRefreshToast);
+  }
+
+  async function setDashboardToday() {
+    const today = toIsoDate(new Date());
+    document.getElementById('dashFrom').value = today;
+    document.getElementById('dashTo').value = today;
+    await applyDashboardRange(true);
+  }
+
+  function bindDashboardTabs() {
+    const tabs = document.getElementById('dashboardTabs');
+    if (!tabs) return;
+    tabs.querySelectorAll('.tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.dashTab === dashboardState.activeTab);
+    });
+  }
+
+  function switchDashboardTab(tabKey, button, options = {}) {
+    dashboardState.activeTab = tabKey;
+
+    document.querySelectorAll('#dashboardTabs .tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.dashTab === tabKey);
+    });
+
+    ['overview', 'analytics', 'watchlist'].forEach(key => {
+      const panel = document.getElementById(`dashboard-tab-${key}`);
+      if (panel) {
+        panel.classList.toggle('hidden', key !== tabKey);
+        panel.classList.toggle('active', key === tabKey);
+      }
+    });
+
+    refreshVisibleDashboardTab();
+
+    if (options.scrollId) {
+      window.requestAnimationFrame(() => {
+        document.getElementById(options.scrollId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }
+
+  function refreshVisibleDashboardTab() {
+    if (dashboardState.activeTab !== 'analytics') return;
+    renderTrend();
+    renderBreakdown();
+    renderPerformance();
+    renderMomentum();
+    renderInsights();
+  }
+
+  function bindTrendControls() {
+    const controls = document.getElementById('trendControls');
+    controls.addEventListener('click', event => {
+      const button = event.target.closest('button[data-trend]');
+      if (!button) return;
+
+      dashboardState.trendMode = button.dataset.trend;
+      controls.querySelectorAll('button').forEach(item => item.classList.toggle('active', item === button));
+      renderTrend();
+    });
+  }
+
+  function bindNotificationDismiss() {
+    document.addEventListener('click', event => {
+      const panel = document.getElementById('notifyPanel');
+      const trigger = document.getElementById('notifyBtn');
+      if (!panel || panel.classList.contains('hidden')) return;
+      if (panel.contains(event.target) || trigger.contains(event.target)) return;
+      panel.classList.add('hidden');
+    });
+  }
+
+  function formatNotificationTime(raw) {
+    if (!raw) return 'Just now';
+    const normalized = raw.replace(' ', 'T');
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) return raw;
+    return date.toLocaleString('en-PH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getNotificationAction(item) {
+    const role = localStorage.getItem('role') || '';
+    const message = String(item && item.message ? item.message : '').toLowerCase();
+    if (!message) return null;
+
+    if (message.includes('low attendance')) {
+      if (role === 'staff') {
+        return { label: 'Open Attendance', run() { window.location.href = 'attendance.html'; } };
+      }
+      return {
+        label: 'Go to Watchlist',
+        run() {
+          scrollToSection('alertsSection');
+          showToast('Jumped to the watchlist section', 'info');
+        }
+      };
+    }
+
+    if (message.includes('new student')) {
+      return { label: 'Open Staff', run() { window.location.href = 'students.html'; } };
+    }
+
+    if (message.includes('new teacher')) {
+      return { label: 'Open Supervisors', run() { window.location.href = 'teachers.html'; } };
+    }
+
+    if (message.includes('attendance saved') || message.includes('attendance recorded')) {
+      return { label: 'Open Attendance', run() { window.location.href = 'attendance.html'; } };
+    }
+
+    return null;
+  }
+
+  function buildNotificationMarkup(item, compact = false) {
+    const type = item.type || 'info';
+    const unread = !item.is_read || item.is_read === '0' || item.is_read === 0 || item.is_read === false;
+    const when = formatNotificationTime(item.created_at);
+    const action = getNotificationAction(item);
+    return `
+      <button type="button" class="notification-feed-item ${type} ${unread ? 'unread' : 'read'} ${compact ? 'compact' : ''}" onclick="openNotification(${item.id})">
+        <div class="notification-feed-top">
+          <span class="notification-feed-type">${type.toUpperCase()}</span>
+          <span class="notification-feed-time">${when}</span>
+        </div>
+        <p>${escapeHtml(item.message)}</p>
+        <div class="notification-feed-meta">
+          <span class="notification-feed-state ${unread ? 'unread' : 'read'}">${unread ? 'Unread' : 'Read'}</span>
+          <span class="notification-feed-action">${action ? action.label : (unread ? 'Read details' : 'View message')}</span>
+        </div>
+      </button>
+    `;
+  }
+
+  function renderStats(stats) {
+    if (!stats) return;
+
+    const present = Number(stats.present_today) || 0;
+    const absent = Number(stats.absent_today) || 0;
+    const totalTracked = present + absent;
+    const rate = totalTracked ? Math.round((present / totalTracked) * 100) : 0;
+    const meta = (dashboardState.payload && dashboardState.payload.meta) || {};
+    const from = meta.from || dashboardState.rangeFrom;
+    const to = meta.to || dashboardState.rangeTo;
+    const rangeLabel = formatRangeDisplay(from, to);
+    const singleDay = from === to;
+
+    setText('totalStudents', stats.total_students || 0);
+    setText('totalTeachers', stats.total_teachers || 0);
+    setText('presentToday', present);
+    setText('absentToday', absent);
+
+    setText('studentsNote', `${stats.total_students || 0} active records`);
+    setText('teachersNote', `${stats.total_teachers || 0} available supervisors`);
+    setText('presentNote', totalTracked ? `${rate}% attendance rate for ${rangeLabel.toLowerCase()}` : `No attendance logs for ${rangeLabel.toLowerCase()}`);
+    setText('absentNote', absent ? `${absent} absence logs need checking` : `No absences recorded for ${rangeLabel.toLowerCase()}`);
+
+    setText('heroRate', `${rate}%`);
+    setText('heroPresent', present);
+    setText('heroAbsent', absent);
+    setText('heroAlertCount', (dashboardState.payload.alerts || []).length);
+    setText('heroDateChip', rangeLabel);
+    setText('pulseRangeLabel', singleDay ? 'Selected Day' : 'Selected Range');
+    setText('heroRateCaption', describeRate(rate, rangeLabel));
+    setText('heroDescription', buildHeroDescription(rate, present, absent, rangeLabel));
+    setText('heroHealthChip', rate >= 85 ? 'Health: strong' : rate >= 70 ? 'Health: watch closely' : 'Health: intervention needed');
+    setText('heroFocusChip', absent ? `Focus: ${absent} absences in range` : 'Focus: steady attendance in range');
+    setText('breakdownStatus', rate >= 85 ? 'Excellent' : rate >= 70 ? 'Good' : 'At Risk');
+  }
+
+  function renderTrend() {
+    const payload = dashboardState.payload || {};
+    const mode = dashboardState.trendMode;
+    const highlightContainer = document.getElementById('trendHighlights');
+
+    if (mode === 'weekly') {
+      const rows = payload.weekly || [];
+      renderLineChart(
+        'trendChart',
+        rows.map(item => item.label),
+        rows.map(item => Number(item.attendance_rate) || 0),
+        rows.map(item => Number(item.absent_rate) || 0),
+        {
+          primaryLabel: 'Present Rate',
+          secondaryLabel: 'Absent Rate',
+          percent: true,
+          max: 100,
+          tooltipSuffix: '%'
+        }
+      );
+      setText('trendTitle', 'Weekly Attendance Trend');
+      setText('trendSummary', 'A smoother weekly view of present versus absent movement within the selected range.');
+      highlightContainer.innerHTML = buildTrendHighlights(rows.map(item => Number(item.attendance_rate) || 0), 'week');
+      return;
+    }
+
+    if (mode === 'monthly') {
+      const rows = payload.monthly || [];
+      const values = rows.map(item => Number(item.attendance_rate) || 0);
+      renderLineChart(
+        'trendChart',
+        rows.map(item => item.label),
+        values,
+        rows.map(item => Number(item.absent_rate) || 0),
+        {
+          primaryLabel: 'Present Rate',
+          secondaryLabel: 'Absent Rate',
+          percent: true,
+          max: 100,
+          tooltipSuffix: '%'
+        }
+      );
+      setText('trendTitle', 'Monthly Attendance Momentum');
+      setText('trendSummary', 'Use this wider view to compare present versus absent movement over longer periods inside the selected range.');
+      highlightContainer.innerHTML = buildTrendHighlights(values, 'month');
+      return;
+    }
+
+    const rows = payload.daily || [];
+    renderLineChart(
+      'trendChart',
+      rows.map(item => item.day),
+      rows.map(item => Number(item.present) || 0),
+      rows.map(item => Number(item.absent) || 0),
+      { primaryLabel: 'Present', secondaryLabel: 'Absent' }
+    );
+    setText('trendTitle', 'Daily Attendance Flow');
+    setText('trendSummary', 'A day-by-day pulse of present versus absent movement for the selected range.');
+    highlightContainer.innerHTML = buildDailyHighlights(rows);
+  }
+
+  function renderBreakdown() {
+    const stats = dashboardState.payload && dashboardState.payload.stats ? dashboardState.payload.stats[0] : null;
+    if (!stats) return;
+
+    const present = Number(stats.present_today) || 0;
+    const absent = Number(stats.absent_today) || 0;
+    const total = present + absent;
+    const rate = total ? Math.round((present / total) * 100) : 0;
+
+    renderDonut(
+      'todayBreakdownChart',
+      ['Present', 'Absent'],
+      [present, absent],
+      [CHART_THEME.green, CHART_THEME.red],
+      {
+        cutout: '76%',
+        centerTextLines: [
+          { text: `${rate}%`, color: CHART_THEME.text, font: '700 26px Bahnschrift' },
+          { text: 'present', color: CHART_THEME.muted, font: '600 11px Bahnschrift' }
+        ]
+      }
+    );
+
+    document.getElementById('todayLegend').innerHTML = [
+      { label: 'Present', value: present, accent: 'good' },
+      { label: 'Absent', value: absent, accent: absent ? 'danger' : 'neutral' },
+      { label: 'Total Records', value: total, accent: 'neutral' }
+    ].map(item => `
+      <div class="metric-list-item ${item.accent}">
+        <span>${item.label}</span>
+        <strong>${item.value}</strong>
+      </div>
+    `).join('');
+  }
+
+  function renderPerformance() {
+    const rows = (dashboardState.payload && dashboardState.payload.performance) || [];
+    const values = rows.map(item => Number(item.attendance_rate) || 0);
+
+    renderBarChart('performanceChart', rows.map(item => item.full_name), values, {
+      datasetLabel: 'Attendance Rate',
+      max: 100,
+      horizontal: true,
+      colors: values.map(metricColor),
+      showLegend: false
+    });
+  }
+
+  function renderMomentum() {
+    const rows = (dashboardState.payload && dashboardState.payload.monthly) || [];
+    const values = rows.map(item => Number(item.attendance_rate) || 0);
+
+    renderSingleLineChart(
+      'momentumChart',
+      rows.map(item => item.label),
+      values,
+      'Monthly Rate',
+      CHART_THEME.blue,
+      { tooltipSuffix: '%', showLegend: false }
+    );
+
+    const average = averageOf(values);
+    setText('momentumStatus', average >= 85 ? 'Strong' : average >= 70 ? 'Stable' : 'Needs support');
+  }
+
+  function renderInsights() {
+    const payload = dashboardState.payload || {};
+    const performance = payload.performance || [];
+    const weekly = payload.weekly || [];
+    const alerts = payload.alerts || [];
+
+    const topStudent = performance[0];
+    const bestWeek = weekly.reduce((best, item) => {
+      const rate = Number(item.attendance_rate) || 0;
+      return !best || rate > best.rate ? { label: item.label, rate } : best;
+    }, null);
+    const weakestWeek = weekly.reduce((worst, item) => {
+      const rate = Number(item.attendance_rate) || 0;
+      return !worst || rate < worst.rate ? { label: item.label, rate } : worst;
+    }, null);
+
+    const insights = [
+      topStudent
+        ? {
+            title: 'Top performer',
+            value: `${Number(topStudent.attendance_rate) || 0}%`,
+            body: `${topStudent.full_name} is currently leading the attendance chart.`
+          }
+        : null,
+      bestWeek
+        ? {
+            title: 'Best weekly momentum',
+            value: `${bestWeek.rate}%`,
+            body: `${bestWeek.label} delivered the strongest weekly attendance pace.`
+          }
+        : null,
+      weakestWeek
+        ? {
+            title: 'Lowest weekly momentum',
+            value: `${weakestWeek.rate}%`,
+            body: `${weakestWeek.label} may need extra follow-up to recover consistency.`
+          }
+        : null,
+      {
+        title: 'Watchlist pressure',
+        value: `${alerts.length}`,
+        body: alerts.length
+          ? `${alerts.length} staff are below the attendance safety threshold.`
+          : 'No staff are currently under the alert threshold.'
+      }
+    ].filter(Boolean);
+
+    document.getElementById('insightList').innerHTML = insights.map(item => `
+      <div class="insight-card">
+        <div class="insight-card-head">
+          <span>${item.title}</span>
+          <strong>${item.value}</strong>
+        </div>
+        <p>${item.body}</p>
+      </div>
+    `).join('');
+  }
+
+  function renderAlerts() {
+    const alerts = (dashboardState.payload && dashboardState.payload.alerts) || [];
+    setText('alertBadgeStatus', `${alerts.length} Active Notifications`);
+    const q = (document.getElementById('alertSearch')?.value || '').toLowerCase();
+    const severity = document.getElementById('alertSeverityFilter')?.value || '';
+    const filtered = alerts.filter(item => {
+      const rate = Number(item.rate) || 0;
+      const tone = rate < 50 ? 'critical' : 'warning';
+      const haystack = [item.full_name, rate, tone].join(' ').toLowerCase();
+      return haystack.includes(q) && (!severity || tone === severity);
+    });
+
+    const list = document.getElementById('alertList');
+    if (!filtered.length) {
+      list.innerHTML = '<p class="empty-msg">No notifications right now.</p>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(item => {
+      const rate = Number(item.rate) || 0;
+      const tone = rate < 50 ? 'critical' : 'warning';
+      return `
+        <div class="alert-item rich-alert-item">
+          <div>
+            <div class="alert-name">${item.full_name}</div>
+            <div class="alert-subtext">${rate < 50 ? 'Critical follow-up needed' : 'Monitor attendance closely'}</div>
+          </div>
+          <span class="alert-rate ${tone}">${rate}%</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadNotifications() {
+    const data = await API.get('/api/notify');
+    dashboardState.notifications = data || [];
+
+    const totalCount = dashboardState.notifications.length;
+    const unreadCount = dashboardState.notifications.filter(item => !item.is_read || item.is_read === '0' || item.is_read === 0 || item.is_read === false).length;
+    setText('feedCount', `${unreadCount} Unread`);
+    setText('notifyUnreadMeta', `${totalCount} total • ${unreadCount} unread`);
+
+    const badge = document.getElementById('notifyBadge');
+    if (unreadCount > 0) {
+      setText('notifyUnreadMeta', `${totalCount} total | ${unreadCount} unread`);
+      badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+      badge.classList.remove('hidden');
+    } else {
+      setText('notifyUnreadMeta', 'No notifications');
+      badge.textContent = '';
+      badge.classList.add('hidden');
+    }
+
+    const fullList = dashboardState.notifications.length
+      ? dashboardState.notifications.map(item => buildNotificationMarkup(item, false)).join('')
+      : '<p class="empty-msg">No notifications yet.</p>';
+
+    document.getElementById('notifyList').innerHTML = fullList;
+  }
+
+  function formatDetailLines(items, emptyLabel) {
+    if (!Array.isArray(items) || !items.length) return `- ${emptyLabel}`;
+    const visible = items.slice(0, 12).map(item => `- ${item}`);
+    if (items.length > 12) visible.push(`- ...and ${items.length - 12} more`);
+    return visible.join('\n');
+  }
+
+  function isStudentLowAttendanceNotification(notification) {
+    const role = localStorage.getItem('role') || '';
+    const message = String(notification && notification.message ? notification.message : '').toLowerCase();
+    return role === 'staff' && message.includes('low attendance');
+  }
+
+  async function buildLowAttendanceNotificationMessage(notification) {
+    const detail = await API.get('/api/notify?detail=low_attendance');
+    if (!detail || detail.error) {
+      return `${notification.message}\n\nReceived: ${formatNotificationTime(notification.created_at)}.`;
+    }
+
+    return [
+      notification.message,
+      '',
+      `Attendance Rate: ${detail.attendance_rate || '0'}%`,
+      `Total Attendance Records: ${detail.total_records || '0'}`,
+      `Present Records: ${detail.present_count || '0'}`,
+      `Absent Records: ${detail.absent_count || '0'}`,
+      '',
+      'Present Dates:',
+      formatDetailLines(detail.present_dates, 'No present records yet'),
+      '',
+      'Absent Dates:',
+      formatDetailLines(detail.absent_dates, 'No absent records yet'),
+      '',
+      `Received: ${formatNotificationTime(notification.created_at)}.`
+    ].join('\n');
+  }
+
+  async function openNotification(id) {
+    const notification = dashboardState.notifications.find(item => Number(item.id) === Number(id));
+    if (!notification) return;
+
+    const unread = !notification.is_read || notification.is_read === '0' || notification.is_read === 0 || notification.is_read === false;
+    if (unread) {
+      const res = await API.put('/api/notify', { id });
+      if (res && !res.error) {
+        notification.is_read = true;
+        await loadNotifications();
+      }
+    }
+
+    document.getElementById('notifyPanel').classList.add('hidden');
+
+    const action = getNotificationAction(notification);
+    const notificationDetails = String(notification.details || '').trim();
+    const detailMessage = isStudentLowAttendanceNotification(notification)
+      ? await buildLowAttendanceNotificationMessage(notification)
+      : [
+          notification.message,
+          notificationDetails ? `\n${notificationDetails}` : '',
+          `\nReceived: ${formatNotificationTime(notification.created_at)}.`
+        ].join('').trim();
+    const confirmed = await showConfirmModal({
+      title: `${(notification.type || 'info').toUpperCase()} Notification`,
+      message: detailMessage,
+      confirmText: action ? action.label : 'Okay',
+      cancelText: 'Close'
+    });
+
+    if (confirmed && action) {
+      action.run();
+    }
+  }
+
+  async function markAllRead() {
+    const confirmed = await showConfirmModal({
+      title: 'Mark Notifications',
+      message: 'Do you want to mark all notifications as read?',
+      confirmText: 'Yes',
+      cancelText: 'No'
+    });
+    if (!confirmed) return;
+
+    await API.put('/api/notify', {});
+    document.getElementById('notifyPanel').classList.add('hidden');
+    await loadNotifications();
+    showToast('Notifications marked as read', 'success');
+  }
+
+  function toggleNotifications() {
+    document.getElementById('notifyPanel').classList.toggle('hidden');
+  }
+
+  function scrollToSection(id) {
+    const tabMap = {
+      trendSection: 'analytics',
+      alertsSection: 'watchlist'
+    };
+    const targetTab = tabMap[id];
+    if (targetTab && dashboardState.activeTab !== targetTab) {
+      const activeButton = document.querySelector(`#dashboardTabs .tab[data-dash-tab="${targetTab}"]`);
+      switchDashboardTab(targetTab, activeButton, { scrollId: id });
+      return;
+    }
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function averageOf(values) {
+    if (!values || !values.length) return 0;
+    return Math.round((values.reduce((sum, value) => sum + (Number(value) || 0), 0) / values.length) * 10) / 10;
+  }
+
+  function formatDateChip(date) {
+    return date.toLocaleDateString('en-PH', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  function toIsoDate(date) {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatMediumDate(raw) {
+    if (!raw) return '';
+    const date = new Date(`${raw}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return raw;
+    return date.toLocaleDateString('en-PH', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+
+  function formatRangeDisplay(from, to) {
+    if (!from || !to) return 'Selected range';
+    if (from === to) return formatMediumDate(from);
+    return `${formatMediumDate(from)} - ${formatMediumDate(to)}`;
+  }
+
+  function updateRangeSummary() {
+    const from = document.getElementById('dashFrom').value || dashboardState.rangeFrom;
+    const to = document.getElementById('dashTo').value || dashboardState.rangeTo;
+    const label = formatRangeDisplay(from, to);
+    setText('rangeSummary', `Showing dashboard activity for ${label}.`);
+    setText('heroDateChip', label);
+  }
+
+  function describeRate(rate, rangeLabel) {
+    const rangeText = String(rangeLabel || 'the selected range').toLowerCase();
+    if (rate >= 90) return `Strong attendance health across ${rangeText}.`;
+    if (rate >= 75) return `Attendance is holding well across ${rangeText}, with a few cases to watch.`;
+    if (rate > 0) return `Attendance needs extra attention and follow-up across ${rangeText}.`;
+    return `Waiting for attendance activity in ${rangeText}.`;
+  }
+
+  function buildHeroDescription(rate, present, absent, rangeLabel) {
+    const rangeText = String(rangeLabel || 'the selected range').toLowerCase();
+    if (!present && !absent) return `No attendance records were captured for ${rangeText} yet, so the dashboard is waiting for matching logs.`;
+    if (rate >= 90) return `Attendance is looking strong for ${rangeText}, with ${present} present logs and only ${absent} absences recorded.`;
+    if (rate >= 75) return `${present} present logs were recorded for ${rangeText}, while ${absent} absences still need a closer look.`;
+    return `Attendance is under pressure for ${rangeText}: ${present} present versus ${absent} absent. This is a good time to act on the watchlist.`;
+  }
+
+  function buildTrendHighlights(values, label) {
+    if (!values.length) return '<p class="empty-msg">No trend data available yet.</p>';
+
+    const peak = Math.max(...values);
+    const low = Math.min(...values);
+    const average = averageOf(values);
+
+    return [
+      { title: `Peak ${label}`, value: `${peak}%` },
+      { title: `Average ${label}`, value: `${average}%` },
+      { title: `Lowest ${label}`, value: `${low}%` }
+    ].map(item => `
+      <div class="trend-highlight-card">
+        <span>${item.title}</span>
+        <strong>${item.value}</strong>
+      </div>
+    `).join('');
+  }
+
+  function buildDailyHighlights(rows) {
+    if (!rows.length) return '<p class="empty-msg">No daily attendance data available yet.</p>';
+
+    const busiest = rows.reduce((best, item) => {
+      const present = Number(item.present) || 0;
+      return !best || present > best.present ? { label: item.day, present } : best;
+    }, null);
+    const highestAbsence = rows.reduce((best, item) => {
+      const absent = Number(item.absent) || 0;
+      return !best || absent > best.absent ? { label: item.day, absent } : best;
+    }, null);
+    const totalPresent = rows.reduce((sum, item) => sum + (Number(item.present) || 0), 0);
+
+    return [
+      { title: 'Best day', value: busiest ? `${busiest.label} - ${busiest.present}` : '-' },
+      { title: 'Highest absence', value: highestAbsence ? `${highestAbsence.label} - ${highestAbsence.absent}` : '-' },
+      { title: 'Present total', value: totalPresent }
+    ].map(item => `
+      <div class="trend-highlight-card">
+        <span>${item.title}</span>
+        <strong>${item.value}</strong>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>

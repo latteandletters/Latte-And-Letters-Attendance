@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports - Latte & Letters</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon">AE</div>
+      <span class="logo-text">Latte & Letters</span>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div>
+          <div class="user-name" id="userName">Loading...</div>
+          <div class="user-role" id="userRole">-</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-bar">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSidebar()">&#9776; Menu</button>
+      <div class="top-bar-copy">
+        <h2 class="page-title">Reports</h2>
+        <p class="page-subtitle">Review attendance summaries and low-attendance watchlists with clear charts and exportable data.</p>
+      </div>
+      <div class="top-bar-right">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="printReport()">Print</button>
+        <button type="button" class="btn btn-success btn-sm" onclick="openExportModal()">Export CSV</button>
+      </div>
+    </header>
+
+    <div class="content-area reports-content">
+      <section class="dashboard-surface report-hero">
+        <div class="report-hero-copy">
+          <div class="section-kicker">Report Center</div>
+          <h1 class="hero-title" id="reportTitle">Attendance Summary</h1>
+          <p class="hero-description" id="reportSubtitle">
+            Review attendance performance, identify risk zones, and export the current view whenever you need it.
+          </p>
+        </div>
+        <div class="filter-bar report-filter-bar">
+          <div class="form-group report-program-group">
+            <label for="reportProgramFilter">Work Area</label>
+            <select id="reportProgramFilter">
+              <option value="">All Work Areas</option>
+            </select>
+          </div>
+          <div class="report-date-row">
+            <div class="form-group">
+              <label for="fromDate">From</label>
+              <input type="date" id="fromDate">
+            </div>
+            <div class="form-group">
+              <label for="toDate">To</label>
+              <input type="date" id="toDate">
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="setReportsToday()">Today</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="report-summary-grid" id="reportSummaryGrid">
+        <div class="dashboard-surface report-summary-card">
+          <span class="report-summary-label" id="summaryLabel1">Primary</span>
+          <strong class="report-summary-value" id="summaryValue1">-</strong>
+          <p class="report-summary-note" id="summaryNote1">Waiting for data.</p>
+        </div>
+        <div class="dashboard-surface report-summary-card">
+          <span class="report-summary-label" id="summaryLabel2">Secondary</span>
+          <strong class="report-summary-value" id="summaryValue2">-</strong>
+          <p class="report-summary-note" id="summaryNote2">Waiting for data.</p>
+        </div>
+        <div class="dashboard-surface report-summary-card">
+          <span class="report-summary-label" id="summaryLabel3">Tertiary</span>
+          <strong class="report-summary-value" id="summaryValue3">-</strong>
+          <p class="report-summary-note" id="summaryNote3">Waiting for data.</p>
+        </div>
+        <div class="dashboard-surface report-summary-card">
+          <span class="report-summary-label" id="summaryLabel4">Quaternary</span>
+          <strong class="report-summary-value" id="summaryValue4">-</strong>
+          <p class="report-summary-note" id="summaryNote4">Waiting for data.</p>
+        </div>
+      </div>
+
+      <div class="tabs report-tabs">
+          <button type="button" class="tab active" onclick="switchTab('attendance', this)">Attendance Summary</button>
+          <button type="button" class="tab" onclick="switchTab('low', this)">Low Attendance</button>
+      </div>
+
+      <div id="tab-attendance" class="tab-content active">
+        <div class="reports-chart-grid">
+          <div class="dashboard-surface chart-panel chart-panel-wide report-leaderboard-panel">
+            <div class="chart-panel-header">
+              <div>
+                <div class="section-kicker">Leaderboard</div>
+                <h3 class="chart-panel-title">Attendance Rate per Staff</h3>
+                <p class="chart-panel-note">The strongest attendance profiles rise to the top for this range.</p>
+              </div>
+            </div>
+            <div class="chart-panel-body chart-panel-body-lg">
+              <canvas id="attendanceLeaderboardChart"></canvas>
+            </div>
+          </div>
+
+          <div class="reports-side-stack">
+            <div class="dashboard-surface chart-panel">
+              <div class="chart-panel-header">
+                <div>
+                  <div class="section-kicker">Distribution</div>
+                  <h3 class="chart-panel-title">Attendance Bands</h3>
+                </div>
+              </div>
+              <div class="chart-panel-body chart-panel-body-sm">
+                <canvas id="attendanceDistributionChart"></canvas>
+              </div>
+            </div>
+
+            <div class="dashboard-surface chart-panel">
+              <div class="chart-panel-header">
+                <div>
+                  <div class="section-kicker">Mix</div>
+                  <h3 class="chart-panel-title">Present vs Absent vs Late</h3>
+                </div>
+              </div>
+              <div class="chart-panel-body chart-panel-body-sm">
+                <canvas id="attendanceMixChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="filter-bar table-filter-bar">
+            <div class="form-group inline"><label>Search</label><input type="text" id="attReportSearch" class="search-input" placeholder="Search attendance..." oninput="filterAttendanceReport()"></div>
+            <div class="form-group inline"><label>Work Area</label><select id="attCourseFilter" class="search-input" onchange="filterAttendanceReport()"><option value="">All Work Areas</option></select></div>
+            <div class="form-group inline">
+              <label>Rate</label>
+              <select id="attRateFilter" class="search-input" onchange="filterAttendanceReport()">
+                <option value="">All Rates</option>
+                <option value="safe">75% and above</option>
+                <option value="warning">50% to 74%</option>
+                <option value="critical">Below 50%</option>
+              </select>
+            </div>
+          </div>
+          <table class="data-table" id="attTable">
+            <thead>
+              <tr>
+                <th>Staff ID</th>
+                <th>Name</th>
+                <th>Work Area</th>
+                <th>Shift Group</th>
+                <th>Total</th>
+                <th>Present</th>
+                <th>Absent</th>
+                <th>Late</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody id="attBody"><tr><td colspan="9" class="loading-row">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-low" class="tab-content hidden">
+        <div class="reports-chart-grid">
+          <div class="dashboard-surface chart-panel chart-panel-wide report-leaderboard-panel">
+            <div class="chart-panel-header">
+              <div>
+                <div class="section-kicker">Risk Map</div>
+                <h3 class="chart-panel-title">Staff Below Threshold</h3>
+                <p class="chart-panel-note">The lower the bar, the more urgent the attendance intervention.</p>
+              </div>
+            </div>
+            <div class="chart-panel-body chart-panel-body-lg">
+              <canvas id="riskChart"></canvas>
+            </div>
+          </div>
+
+          <div class="reports-side-stack">
+            <div class="dashboard-surface chart-panel">
+              <div class="chart-panel-header">
+                <div>
+                  <div class="section-kicker">Severity</div>
+                  <h3 class="chart-panel-title">Critical vs Warning</h3>
+                </div>
+              </div>
+              <div class="chart-panel-body chart-panel-body-sm">
+                <canvas id="riskDistributionChart"></canvas>
+              </div>
+            </div>
+
+            <div class="dashboard-surface dashboard-stack-card">
+              <div class="chart-panel-header">
+                <div>
+                  <div class="section-kicker">Action Queue</div>
+                  <h3 class="chart-panel-title">Priority Follow-up</h3>
+                </div>
+              </div>
+              <div class="insight-list" id="riskActionList">
+                <p class="empty-msg">No staff in the risk queue.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-banner">Staff below the 75% attendance threshold need attention.</div>
+        <div class="table-card">
+          <div class="filter-bar table-filter-bar">
+            <div class="form-group inline"><label>Search</label><input type="text" id="lowReportSearch" class="search-input" placeholder="Search watchlist..." oninput="filterLowAttendanceReport()"></div>
+            <div class="form-group inline">
+              <label>Severity</label>
+              <select id="lowSeverityFilter" class="search-input" onchange="filterLowAttendanceReport()">
+                <option value="">All Severity</option>
+                <option value="critical">Critical</option>
+                <option value="warning">Warning</option>
+              </select>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Staff ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Attendance Rate</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="lowBody"><tr><td colspan="5" class="loading-row">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay hidden" id="exportModalOverlay" onclick="handleExportOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Export CSV Range</h3>
+      <button type="button" class="btn-icon" onclick="closeExportModal()">x</button>
+    </div>
+    <form id="exportCsvForm">
+      <p class="chart-panel-note">Choose the date range you want to include in the CSV export for the current report tab.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="exportFromDate">From</label>
+          <input type="date" id="exportFromDate" required>
+        </div>
+        <div class="form-group">
+          <label for="exportToDate">To</label>
+          <input type="date" id="exportToDate" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeExportModal()">Cancel</button>
+        <button type="submit" class="btn btn-success">Export CSV</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/charts.js"></script>
+<script>
+  requireRole('admin', 'supervisor');
+  renderNav();
+
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  document.getElementById('fromDate').value = monthStart.toISOString().split('T')[0];
+  document.getElementById('toDate').value = today.toISOString().split('T')[0];
+
+  const reportState = {
+    currentTab: 'attendance',
+    currentData: [],
+    cache: {
+      attendance: [],
+      low: []
+    }
+  };
+  const REPORT_PROGRAM_OPTIONS = [
+    { value: 'Coffee Bar::', code: 'Coffee Bar', specialization: '', label: 'Coffee Bar' },
+    { value: 'Library Desk::', code: 'Library Desk', specialization: '', label: 'Library Desk' },
+    { value: 'Customer Experience::', code: 'Customer Experience', specialization: '', label: 'Customer Experience' },
+    { value: 'Study Lounge::', code: 'Study Lounge', specialization: '', label: 'Study Lounge' },
+    { value: 'Events Corner::', code: 'Events Corner', specialization: '', label: 'Events Corner' },
+    { value: 'Inventory and Pantry::', code: 'Inventory and Pantry', specialization: '', label: 'Inventory and Pantry' },
+    { value: 'Front Office::', code: 'Front Office', specialization: '', label: 'Front Office' },
+    { value: 'Finance Counter::', code: 'Finance Counter', specialization: '', label: 'Finance Counter' }
+  ];
+
+  populateReportProgramFilter();
+  bindReportRangeControls();
+  loadAttendanceSummary();
+
+  function bindReportRangeControls() {
+    const fromInput = document.getElementById('fromDate');
+    const toInput = document.getElementById('toDate');
+    const programInput = document.getElementById('reportProgramFilter');
+
+    [fromInput, toInput].forEach(input => {
+      input.addEventListener('change', () => {
+        const from = fromInput.value;
+        const to = toInput.value;
+        if (!from || !to) return;
+        if (from > to) {
+          showToast('The start date must not be later than the end date', 'error');
+          return;
+        }
+        reloadCurrentTab();
+      });
+    });
+
+    programInput.addEventListener('change', () => {
+      if (reportState.currentTab === 'low') {
+        applyLowAttendanceView();
+      } else {
+        applyAttendanceView();
+      }
+    });
+  }
+
+  document.getElementById('exportCsvForm').addEventListener('submit', confirmExportCSV);
+
+  function reportQuery(type, from = document.getElementById('fromDate').value, to = document.getElementById('toDate').value) {
+    const params = new URLSearchParams({ type });
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    return '/api/reports?' + params.toString();
+  }
+
+  async function loadAttendanceSummary() {
+    reportState.currentTab = 'attendance';
+    const data = await API.get(reportQuery('attendance_summary'));
+    reportState.cache.attendance = data || [];
+    applyAttendanceView();
+  }
+
+  function applyAttendanceView() {
+    const rows = filterRowsBySelectedProgram(reportState.cache.attendance);
+    reportState.currentData = rows;
+    populateAttendanceReportFilters(rows);
+    filterAttendanceReport();
+    renderAttendanceCharts(rows);
+    const programLabel = getSelectedProgramLabel();
+    setReportHero(
+      'Attendance Summary',
+      programLabel
+        ? `A visual breakdown of attendance quality, balance, and consistency for ${programLabel}.`
+        : 'A visual breakdown of attendance quality, balance, and consistency for the selected date range.',
+      [
+        summaryCard('Average Rate', `${averageOf(rows.map(row => Number(row.attendance_rate) || 0))}%`, 'Overall attendance quality for the current date range.'),
+        summaryCard('Safe Staff', countWhere(rows, row => Number(row.attendance_rate) >= 75), 'Staff currently staying within the safe threshold.'),
+        summaryCard('At Risk', countWhere(rows, row => Number(row.attendance_rate) < 75), 'Staff needing extra attendance follow-up.'),
+        summaryCard('Logs Count', rows.reduce((sum, row) => sum + (Number(row.total_days) || 0), 0), 'Total attendance entries across all staff.')
+      ]
+    );
+  }
+
+  async function loadLowAttendance() {
+    reportState.currentTab = 'low';
+    const data = await API.get(reportQuery('low_attendance'));
+    reportState.cache.low = data || [];
+    applyLowAttendanceView();
+  }
+
+  function applyLowAttendanceView() {
+    const rows = filterRowsBySelectedProgram(reportState.cache.low);
+    reportState.currentData = rows;
+    filterLowAttendanceReport();
+    renderLowAttendanceCharts(rows);
+
+    const rates = rows.map(row => Number(row.attendance_rate) || 0);
+    const critical = countWhere(rows, row => Number(row.attendance_rate) < 50);
+    const lowest = rates.length ? Math.min(...rates) : 0;
+    const programLabel = getSelectedProgramLabel();
+
+    setReportHero(
+      'Low Attendance Watchlist',
+      programLabel
+        ? `A focused view of staff below the threshold for ${programLabel}, including severity bands and follow-up priority.`
+        : 'A focused view of staff below the threshold, including severity bands and follow-up priority.',
+      [
+        summaryCard('At Risk', rows.length, 'Staff currently below the 75% attendance threshold.'),
+        summaryCard('Critical Cases', critical, 'Staff under 50% attendance requiring urgent action.'),
+        summaryCard('Average Risk Rate', `${averageOf(rates)}%`, 'Average attendance rate across the watchlist.'),
+        summaryCard('Lowest Rate', `${lowest}%`, 'The most urgent attendance case in this report.')
+      ]
+    );
+  }
+
+  function renderAttendanceTable(data) {
+    const tbody = document.getElementById('attBody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-row">No attendance data found for this range.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(row => {
+      const rate = Number(row.attendance_rate) || 0;
+      const totalDays = Number(row.total_days) || 0;
+      const presentDays = Number(row.present_days) || 0;
+      const absentDays = Number(row.absent_days) || 0;
+      const lateDays = Number(row.late_days) || 0;
+      const cls = rate >= 75 ? 'success' : rate >= 50 ? 'warning' : 'danger';
+      return `
+        <tr>
+          <td>${row.student_id}</td>
+          <td>${row.full_name}</td>
+          <td>${row.course || '-'}</td>
+          <td>${row.section || '-'}</td>
+          <td>${totalDays}</td>
+          <td>${presentDays}</td>
+          <td>${absentDays}</td>
+          <td>${lateDays}</td>
+          <td><span class="grade-badge ${cls}">${rate}%</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function populateAttendanceReportFilters(data) {
+    const courseFilter = document.getElementById('attCourseFilter');
+    const currentCourse = courseFilter.value;
+    const courses = [...new Set(data.map(row => row.course || '').filter(Boolean))].sort();
+    courseFilter.innerHTML = '<option value="">All Work Areas</option>' + courses.map(course => `<option value="${course}">${course}</option>`).join('');
+    courseFilter.value = courses.includes(currentCourse) ? currentCourse : '';
+  }
+
+  function filterAttendanceReport() {
+    const q = (document.getElementById('attReportSearch')?.value || '').toLowerCase();
+    const course = document.getElementById('attCourseFilter')?.value || '';
+    const rateBand = document.getElementById('attRateFilter')?.value || '';
+    const filtered = filterRowsBySelectedProgram(reportState.cache.attendance).filter(row => {
+      const rate = Number(row.attendance_rate) || 0;
+      const haystack = [row.student_id, row.full_name, row.course, row.specialization, resolveProgramFilterLabel(row.course, row.specialization), row.section, row.attendance_rate]
+        .join(' ').toLowerCase();
+      const matchesSearch = haystack.includes(q);
+      const matchesCourse = !course || row.course === course;
+      const matchesRate = !rateBand ||
+        (rateBand === 'safe' && rate >= 75) ||
+        (rateBand === 'warning' && rate >= 50 && rate < 75) ||
+        (rateBand === 'critical' && rate < 50);
+      return matchesSearch && matchesCourse && matchesRate;
+    });
+    renderAttendanceTable(filtered);
+  }
+
+  function renderAttendanceCharts(data) {
+    const sorted = [...data].sort((a, b) => (Number(b.attendance_rate) || 0) - (Number(a.attendance_rate) || 0)).slice(0, 10);
+    const leaderboardValues = sorted.map(row => Number(row.attendance_rate) || 0);
+    const totalPresent = data.reduce((sum, row) => sum + (Number(row.present_days) || 0), 0);
+    const totalAbsent = data.reduce((sum, row) => sum + (Number(row.absent_days) || 0), 0);
+    const totalLate = data.reduce((sum, row) => sum + (Number(row.late_days) || 0), 0);
+
+    renderBarChart('attendanceLeaderboardChart', sorted.map(row => row.full_name), leaderboardValues, {
+      datasetLabel: 'Attendance Rate',
+      max: 100,
+      horizontal: true,
+      showLegend: false,
+      colors: leaderboardValues.map(metricColor),
+      yAxisWidth: 150,
+      labelMaxLength: 20,
+      maxBarThickness: 50,
+      categoryPercentage: 0.78,
+      barPercentage: 0.9,
+      layoutPadding: { left: 0, right: 0, top: 0, bottom: 0 }
+    });
+
+    const bandCounts = [
+      countWhere(data, row => Number(row.attendance_rate) >= 90),
+      countWhere(data, row => Number(row.attendance_rate) >= 75 && Number(row.attendance_rate) < 90),
+      countWhere(data, row => Number(row.attendance_rate) < 75)
+    ];
+
+    renderDonut('attendanceDistributionChart', ['90-100%', '75-89%', 'Below 75%'], bandCounts, [
+      CHART_THEME.green,
+      CHART_THEME.amber,
+      CHART_THEME.red
+    ], {
+      centerTextLines: [
+        { text: `${data.length}`, color: CHART_THEME.text, font: '700 24px Bahnschrift' },
+        { text: 'staff', color: CHART_THEME.muted, font: '600 11px Bahnschrift' }
+      ]
+    });
+
+    renderDonut('attendanceMixChart', ['Present', 'Absent', 'Late'], [totalPresent, totalAbsent, totalLate], [
+      CHART_THEME.green,
+      CHART_THEME.red,
+      CHART_THEME.amber
+    ], {
+      centerTextLines: [
+        { text: `${totalPresent + totalAbsent + totalLate}`, color: CHART_THEME.text, font: '700 24px Bahnschrift' },
+        { text: 'records', color: CHART_THEME.muted, font: '600 11px Bahnschrift' }
+      ]
+    });
+  }
+
+  function renderLowAttendanceTable(data) {
+    const tbody = document.getElementById('lowBody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No students with low attendance for this range.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(row => {
+      const rate = Number(row.attendance_rate) || 0;
+      const statusLabel = rate < 50 ? 'Critical' : 'Warning';
+      const badgeClass = rate < 50 ? 'danger' : 'warning';
+      return `
+        <tr>
+          <td>${row.student_id}</td>
+          <td>${row.full_name}</td>
+          <td>${row.email || '-'}</td>
+          <td><span class="grade-badge ${badgeClass}">${rate}%</span></td>
+          <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function filterLowAttendanceReport() {
+    const q = (document.getElementById('lowReportSearch')?.value || '').toLowerCase();
+    const severity = document.getElementById('lowSeverityFilter')?.value || '';
+    const filtered = filterRowsBySelectedProgram(reportState.cache.low).filter(row => {
+      const rate = Number(row.attendance_rate) || 0;
+      const rowSeverity = rate < 50 ? 'critical' : 'warning';
+      const haystack = [row.student_id, row.full_name, row.email, row.course, row.specialization, resolveProgramFilterLabel(row.course, row.specialization), row.attendance_rate, rowSeverity]
+        .join(' ').toLowerCase();
+      return haystack.includes(q) && (!severity || rowSeverity === severity);
+    });
+    renderLowAttendanceTable(filtered);
+  }
+
+  function renderLowAttendanceCharts(data) {
+    const sorted = [...data].sort((a, b) => (Number(a.attendance_rate) || 0) - (Number(b.attendance_rate) || 0));
+    const rates = sorted.map(row => Number(row.attendance_rate) || 0);
+
+    renderBarChart('riskChart', sorted.map(row => row.full_name), rates, {
+      datasetLabel: 'Attendance Rate',
+      max: 100,
+      horizontal: true,
+      showLegend: false,
+      colors: rates.map(rate => rate < 50 ? CHART_THEME.red : CHART_THEME.amber),
+      yAxisWidth: 150,
+      labelMaxLength: 20,
+      maxBarThickness: 50,
+      categoryPercentage: 0.78,
+      barPercentage: 0.9,
+      layoutPadding: { left: 0, right: 0, top: 0, bottom: 0 }
+    });
+
+    const critical = countWhere(data, row => Number(row.attendance_rate) < 50);
+    const warning = countWhere(data, row => Number(row.attendance_rate) >= 50 && Number(row.attendance_rate) < 75);
+
+    renderDonut('riskDistributionChart', ['Critical', 'Warning'], [critical, warning], [
+      CHART_THEME.red,
+      CHART_THEME.amber
+    ], {
+      centerTextLines: [
+        { text: `${data.length}`, color: CHART_THEME.text, font: '700 24px Bahnschrift' },
+        { text: 'cases', color: CHART_THEME.muted, font: '600 11px Bahnschrift' }
+      ]
+    });
+
+    const actionList = document.getElementById('riskActionList');
+    actionList.innerHTML = data.length
+      ? sorted.slice(0, 5).map(row => {
+          const rate = Number(row.attendance_rate) || 0;
+          return `
+            <div class="insight-card">
+              <div class="insight-card-head">
+                <span>${row.full_name}</span>
+                <strong>${rate}%</strong>
+              </div>
+              <p>${rate < 50 ? 'Urgent intervention recommended.' : 'Reach out before the rate drops further.'}</p>
+            </div>
+          `;
+        }).join('')
+      : '<p class="empty-msg">No students in the risk queue.</p>';
+  }
+
+  function switchTab(name, button) {
+    document.querySelectorAll('.tab-content').forEach(item => item.classList.add('hidden'));
+    document.querySelectorAll('.tab').forEach(item => item.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.remove('hidden');
+    button.classList.add('active');
+
+    if (name === 'low') loadLowAttendance();
+    else loadAttendanceSummary();
+  }
+
+  function reloadCurrentTab() {
+    if (reportState.currentTab === 'low') return loadLowAttendance();
+    return loadAttendanceSummary();
+  }
+
+  function printReport() {
+    window.print();
+  }
+
+  function setReportsToday() {
+    const todayValue = new Date().toISOString().split('T')[0];
+    document.getElementById('fromDate').value = todayValue;
+    document.getElementById('toDate').value = todayValue;
+    reloadCurrentTab();
+  }
+
+  function openExportModal() {
+    document.getElementById('exportFromDate').value = document.getElementById('fromDate').value;
+    document.getElementById('exportToDate').value = document.getElementById('toDate').value;
+    document.getElementById('exportModalOverlay').classList.remove('hidden');
+  }
+
+  function closeExportModal() {
+    document.getElementById('exportModalOverlay').classList.add('hidden');
+  }
+
+  function handleExportOverlayClick(event) {
+    if (event.target.id === 'exportModalOverlay') closeExportModal();
+  }
+
+  function currentReportType() {
+    return reportState.currentTab === 'low' ? 'low_attendance' : 'attendance_summary';
+  }
+
+  async function confirmExportCSV(event) {
+    event.preventDefault();
+
+    const from = document.getElementById('exportFromDate').value;
+    const to = document.getElementById('exportToDate').value;
+
+    if (!from || !to) {
+      showToast('Select both export dates', 'error');
+      return;
+    }
+
+    if (from > to) {
+      showToast('The start date must not be later than the end date', 'error');
+      return;
+    }
+
+    let rows = await API.get(reportQuery(currentReportType(), from, to));
+    rows = filterRowsBySelectedProgram(rows || []);
+    if (!rows || !rows.length) {
+      showToast('No data to export for the selected range', 'error');
+      return;
+    }
+
+    const keys = Object.keys(rows[0]);
+    const csv = [
+      keys.join(','),
+      ...rows.map(row => keys.map(key => `"${String(row[key] ?? '').replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const link = document.createElement('a');
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    link.download = `report_${reportState.currentTab}_${from}_to_${to}.csv`;
+    link.click();
+    closeExportModal();
+    showToast('CSV exported successfully', 'success');
+  }
+
+  function setReportHero(title, subtitle, cards) {
+    document.getElementById('reportTitle').textContent = title;
+    document.getElementById('reportSubtitle').textContent = subtitle;
+
+    cards.forEach((card, index) => {
+      const slot = index + 1;
+      document.getElementById(`summaryLabel${slot}`).textContent = card.label;
+      document.getElementById(`summaryValue${slot}`).textContent = card.value;
+      document.getElementById(`summaryNote${slot}`).textContent = card.note;
+    });
+  }
+
+  function summaryCard(label, value, note) {
+    return { label, value, note };
+  }
+
+  function countWhere(rows, predicate) {
+    return rows.filter(predicate).length;
+  }
+
+  function averageOf(values) {
+    if (!values || !values.length) return 0;
+    return Math.round((values.reduce((sum, value) => sum + (Number(value) || 0), 0) / values.length) * 10) / 10;
+  }
+
+  function aggregateAverage(rows, keyName, valueName) {
+    const map = new Map();
+
+    rows.forEach(row => {
+      const key = row[keyName];
+      const value = Number(row[valueName]) || 0;
+      if (!map.has(key)) map.set(key, { total: 0, count: 0 });
+      const item = map.get(key);
+      item.total += value;
+      item.count += 1;
+    });
+
+    return Array.from(map.entries())
+      .map(([key, item]) => ({
+        key,
+        value: Math.round((item.total / item.count) * 10) / 10
+      }))
+      .sort((a, b) => b.value - a.value);
+  }
+
+  function populateReportProgramFilter() {
+    const select = document.getElementById('reportProgramFilter');
+    const current = select.value;
+    select.innerHTML = '<option value="">All Work Areas</option>' + REPORT_PROGRAM_OPTIONS.map(option =>
+      `<option value="${option.value}">${option.label}</option>`
+    ).join('');
+    select.value = REPORT_PROGRAM_OPTIONS.some(option => option.value === current) ? current : '';
+  }
+
+  function getSelectedProgramLabel() {
+    const value = document.getElementById('reportProgramFilter')?.value || '';
+    const match = REPORT_PROGRAM_OPTIONS.find(option => option.value === value);
+    return match ? match.label : '';
+  }
+
+  function resolveProgramSelection(value) {
+    const [code, specialization = ''] = String(value || '').split('::');
+    return { code, specialization };
+  }
+
+  function filterRowsBySelectedProgram(rows) {
+    const value = document.getElementById('reportProgramFilter')?.value || '';
+    if (!value) return [...(rows || [])];
+    const { code, specialization } = resolveProgramSelection(value);
+    return (rows || []).filter(row =>
+      String(row.course || '') === code &&
+      (!specialization || String(row.specialization || '') === specialization)
+    );
+  }
+
+  function resolveProgramFilterLabel(course, specialization = '') {
+    const match = REPORT_PROGRAM_OPTIONS.find(option =>
+      option.code === String(course || '') &&
+      String(option.specialization || '') === String(specialization || '')
+    );
+    if (match) return match.label;
+    const genericMatch = REPORT_PROGRAM_OPTIONS.find(option =>
+      option.code === String(course || '') && !option.specialization
+    );
+    return genericMatch ? genericMatch.label : (course || '-');
+  }
+</script>
+</body>
+</html>

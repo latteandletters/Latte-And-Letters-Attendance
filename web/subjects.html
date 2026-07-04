@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Areas - Latte & Letters</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-icon"></div><span class="logo-text">Latte & Letters</span></div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">-</div></div>
+      </div>
+    </div>
+  </aside>
+  <main class="main-content">
+    <header class="top-bar">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSidebar()">&#9776; Menu</button>
+      <h2 class="page-title" id="subjectsTitle">Manage Work Areas</h2>
+      <div class="top-bar-right">
+        <input type="text" id="searchInput" placeholder="Search work areas..." class="search-input" oninput="filterTable()">
+        <select id="courseFilter" class="search-input" onchange="filterTable()"><option value="">All Area Types</option></select>
+        <select id="yearFilter" class="search-input" onchange="filterTable()"><option value="">All Staff Levels</option></select>
+        <button type="button" class="btn btn-secondary" id="subjectsArchiveToggleBtn" onclick="toggleArchiveView()">View Archived</button>
+      <button type="button" class="btn btn-primary" id="subjectsAddBtn" onclick="openModal()">+ Add Work Area</button>
+      </div>
+    </header>
+    <div class="content-area">
+      <div class="table-card table-scroll-card">
+        <table class="data-table subjects-table">
+          <thead>
+            <tr>
+              <th>Area Code</th>
+              <th>Work Area</th>
+              <th>Supervisor</th>
+              <th>Branch / Department</th>
+              <th>Area Type</th>
+              <th>Position</th>
+              <th>Staff Level</th>
+              <th>Shift Group</th>
+              <th>Staffing Slots</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="subjectsBody"><tr><td colspan="10" class="loading-row">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal student-profile-modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Work Area</h3>
+      <button type="button" class="btn-icon" onclick="closeModal()">x</button>
+    </div>
+    <form id="subjectForm">
+      <input type="hidden" id="subjectId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Area Code</label>
+          <input type="text" id="fCode" required maxlength="20" placeholder="e.g. BAR-01">
+        </div>
+        <div class="form-group">
+          <label>Work Area Name</label>
+          <input type="text" id="fName" required maxlength="60" placeholder="e.g. Coffee Bar Morning Shift">
+        </div>
+      </div>
+
+      <div class="form-row" id="teacherSelectRow">
+        <div class="form-group" id="teacherSelectGroup">
+          <label>Assigned Supervisor</label>
+          <select id="fTeacherId" required><option value="">Select supervisor</option></select>
+        </div>
+        <div class="form-group hidden" id="teacherDisplayGroup">
+          <label>Assigned Supervisor</label>
+          <input type="text" id="fTeacherDisplay" disabled>
+        </div>
+        <div class="form-group">
+          <label>Staffing Slots</label>
+          <input type="number" id="fUnits" min="1" max="6" value="3" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Branch / Department</label>
+          <select id="fCollege" required>
+            <option value="">Select branch / department</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Area Type</label>
+          <select id="fCourse" required disabled>
+            <option value="">Select branch first</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Position</label>
+          <select id="fSpecialization" disabled>
+            <option value="">Select area type first</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Staff Level</label>
+          <select id="fYear" required>
+            <option value="">Select level</option>
+            <option value="1">Level 1 - Trainee</option>
+            <option value="2">Level 2 - Regular</option>
+            <option value="3">Level 3 - Senior</option>
+            <option value="4">Level 4 - Lead</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Shift Group</label>
+          <select id="fSection" required>
+            <option value="">Select shift group</option>
+            <option value="Opening (6am - 2pm)">Opening (6am - 2pm)</option>
+            <option value="Mid Shift (10am - 6pm)">Mid Shift (10am - 6pm)</option>
+            <option value="Closing (2pm - 10pm)">Closing (2pm - 10pm)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  requireRole('admin', 'supervisor');
+  renderNav();
+
+  const ROLE = localStorage.getItem('role');
+  const PROFILE_ID = currentProfileId();
+  const CURRENT_NAME = localStorage.getItem('name') || 'Current Supervisor';
+  let showArchived = false;
+  let subjectsData = [];
+
+  const SUBJECT_DIRECTORY = [
+    {
+      name: 'Main Branch',
+      acronym: 'MAIN',
+      programs: [
+        { code: 'BAR', name: 'Coffee Bar', specializations: ['Barista', 'Drink Prep', 'Cashier'] },
+        { code: 'LIB', name: 'Library Desk', specializations: ['Reading Desk', 'Book Cataloging', 'Study Area Support'] }
+      ]
+    },
+    {
+      name: 'Service Floor',
+      acronym: 'FLOOR',
+      programs: [
+        { code: 'CX', name: 'Customer Experience', specializations: ['Host', 'Floor Attendant', 'Order Runner'] },
+        { code: 'LOUNGE', name: 'Study Lounge', specializations: ['Quiet Zone Monitor', 'Reservation Support'] },
+        { code: 'EVENTS', name: 'Events Corner', specializations: ['Workshop Support', 'Reading Session Support'] }
+      ]
+    },
+    {
+      name: 'Operations',
+      acronym: 'OPS',
+      programs: [
+        { code: 'INV', name: 'Inventory and Pantry', specializations: ['Stock Clerk', 'Pantry Support', 'Receiving'] }
+      ]
+    },
+    {
+      name: 'Administration',
+      acronym: 'ADMIN',
+      programs: [
+        { code: 'FO', name: 'Front Office', specializations: ['Supervisor', 'Admin Assistant'] },
+        { code: 'FIN', name: 'Finance Counter', specializations: ['Cash Audit', 'Sales Report'] }
+      ]
+    }
+  ];
+
+  bindAutoNameCase(['fName']);
+
+  if (ROLE === 'supervisor') {
+    document.getElementById('subjectsTitle').textContent = 'My Work Areas';
+    document.getElementById('teacherSelectGroup').classList.add('hidden');
+    document.getElementById('teacherDisplayGroup').classList.remove('hidden');
+    document.getElementById('subjectsArchiveToggleBtn').classList.add('hidden');
+    document.getElementById('subjectsAddBtn').classList.add('hidden');
+    applyTeacherFieldState();
+  } else {
+    loadTeacherOptions();
+  }
+
+  initializeSubjectDirectoryFields();
+  updateSubjectsViewState();
+  loadSubjects();
+
+  function formatYearLabel(value) {
+    if (value === '1') return 'Level 1';
+    if (value === '2') return 'Level 2';
+    if (value === '3') return 'Level 3';
+    if (value === '4') return 'Level 4';
+    return value || '-';
+  }
+
+  function collegeOptionLabel(college) {
+    return college.acronym ? `${college.name} (${college.acronym})` : college.name;
+  }
+
+  function programOptionLabel(program) {
+    return `${program.name} (${program.code})`;
+  }
+
+  function resolveSubjectCollege(subject) {
+    if (subject && subject.college) return subject.college;
+    const match = findProgramEntry(subject ? subject.course : '');
+    return match ? match.college.name : '';
+  }
+
+  function resolveProgramLabel(programCode, collegeName = '') {
+    const match = findProgramEntry(programCode, collegeName);
+    return match ? programOptionLabel(match.program) : (programCode || '-');
+  }
+
+  function findCollegeEntry(collegeName) {
+    return SUBJECT_DIRECTORY.find(item => item.name === collegeName) || null;
+  }
+
+  function findProgramEntry(programCode, collegeName = '') {
+    const normalized = String(programCode || '').trim().toLowerCase();
+    const colleges = collegeName ? SUBJECT_DIRECTORY.filter(item => item.name === collegeName) : SUBJECT_DIRECTORY;
+    for (const college of colleges) {
+      const program = college.programs.find(item =>
+        item.code.toLowerCase() === normalized ||
+        item.name.toLowerCase() === normalized ||
+        programOptionLabel(item).toLowerCase() === normalized
+      );
+      if (program) return { college, program };
+    }
+    return null;
+  }
+
+  function initializeSubjectDirectoryFields() {
+    populateCollegeOptions();
+    populateProgramOptions();
+    populateSpecializationOptions();
+
+    document.getElementById('fCollege').addEventListener('change', () => {
+      populateProgramOptions();
+      populateSpecializationOptions();
+    });
+
+    document.getElementById('fCourse').addEventListener('change', () => {
+      populateSpecializationOptions();
+    });
+  }
+
+  function populateCollegeOptions(selectedValue = '') {
+    const select = document.getElementById('fCollege');
+    select.innerHTML = '<option value="">Select branch / department</option>' + SUBJECT_DIRECTORY.map(college =>
+      `<option value="${college.name}">${collegeOptionLabel(college)}</option>`
+    ).join('');
+    if (selectedValue && SUBJECT_DIRECTORY.some(college => college.name === selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  function populateProgramOptions(selectedValue = '', selectedCollege = document.getElementById('fCollege').value) {
+    const select = document.getElementById('fCourse');
+    const college = findCollegeEntry(selectedCollege);
+    if (!college) {
+      select.innerHTML = '<option value="">Select branch first</option>';
+      select.disabled = true;
+      select.value = '';
+      return;
+    }
+
+    select.disabled = false;
+    select.innerHTML = '<option value="">Select area type</option>' + college.programs.map(program =>
+      `<option value="${program.name}">${programOptionLabel(program)}</option>`
+    ).join('');
+    const selectedProgram = selectedValue ? findProgramEntry(selectedValue, selectedCollege) : null;
+    if (selectedProgram) {
+      select.value = selectedProgram.program.name;
+    }
+  }
+
+  function populateSpecializationOptions(selectedValue = '', selectedProgram = document.getElementById('fCourse').value, selectedCollege = document.getElementById('fCollege').value) {
+    const select = document.getElementById('fSpecialization');
+    const match = findProgramEntry(selectedProgram, selectedCollege);
+    const specializations = match ? match.program.specializations : [];
+
+    if (!match) {
+      select.innerHTML = '<option value="">Select area type first</option>';
+      select.disabled = true;
+      select.required = false;
+      select.value = '';
+      return;
+    }
+
+    if (!specializations.length) {
+      select.innerHTML = '<option value="">No position</option>';
+      select.disabled = true;
+      select.required = false;
+      select.value = '';
+      return;
+    }
+
+    select.disabled = false;
+    select.required = true;
+    select.innerHTML = '<option value="">Select position</option>' + specializations.map(item =>
+      `<option value="${item}">${item}</option>`
+    ).join('');
+    if (selectedValue && specializations.includes(selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  async function loadTeacherOptions() {
+    const teachers = await API.get('/api/teachers');
+    const select = document.getElementById('fTeacherId');
+    if (!teachers) return;
+    select.innerHTML = '<option value="">Select supervisor</option>' + teachers.map(teacher =>
+      `<option value="${teacher.id}">${teacher.full_name}</option>`
+    ).join('');
+    if (select.options.length > 1) {
+      select.selectedIndex = 1;
+    }
+  }
+
+  function applyTeacherFieldState(data = null) {
+    const teacherIdField = document.getElementById('fTeacherId');
+    const teacherDisplayField = document.getElementById('fTeacherDisplay');
+    if (ROLE === 'supervisor') {
+      teacherIdField.value = PROFILE_ID;
+      teacherIdField.required = false;
+      teacherIdField.disabled = true;
+      teacherDisplayField.value = (data && data.teacher_name) || CURRENT_NAME;
+      return;
+    }
+
+    teacherIdField.disabled = false;
+    teacherIdField.required = true;
+    teacherDisplayField.value = data && data.teacher_name ? data.teacher_name : '';
+    if (data && data.teacher_id) {
+      teacherIdField.value = data.teacher_id;
+    } else if (!teacherIdField.value && teacherIdField.options.length > 1) {
+      teacherIdField.selectedIndex = 1;
+    }
+  }
+
+  async function loadSubjects() {
+    const data = await API.get('/api/subjects' + (showArchived ? '?archived=1' : ''));
+    subjectsData = data || [];
+    populateSubjectFilters(subjectsData);
+    filterTable();
+  }
+
+  function renderSubjects(data) {
+    const tbody = document.getElementById('subjectsBody');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" class="empty-row">${showArchived ? 'No archived work areas found' : 'No work areas found'}</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(subject => `
+      <tr>
+        <td>${subject.code}</td>
+        <td>${subject.name}</td>
+        <td>${subject.teacher_name || '-'}</td>
+        <td>${resolveSubjectCollege(subject) || '-'}</td>
+        <td>${resolveProgramLabel(subject.course, subject.college)}</td>
+        <td>${subject.specialization || '-'}</td>
+        <td>${formatYearLabel(String(subject.year_level || ''))}</td>
+        <td>${subject.section || '-'}</td>
+        <td>${subject.units || '-'}</td>
+        <td class="actions">
+          ${ROLE === 'supervisor'
+            ? '<span class="table-meta">View only</span>'
+            : (showArchived
+                ? `<button type="button" class="btn btn-sm btn-success" onclick="restoreSubject(${subject.id})">Restore</button>
+                   <button type="button" class="btn btn-sm btn-danger" onclick="permanentlyDeleteSubject(${subject.id})">Permanent Delete</button>`
+                : `<button type="button" class="btn btn-sm btn-secondary" onclick="editSubject('${encodeURIComponent(JSON.stringify(subject))}')">Edit</button>
+                   <button type="button" class="btn btn-sm btn-danger" onclick="deleteSubject(${subject.id})">Archive</button>`)}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function populateSubjectFilters(data) {
+    const courseFilter = document.getElementById('courseFilter');
+    const yearFilter = document.getElementById('yearFilter');
+    const currentCourse = courseFilter.value;
+    const currentYear = yearFilter.value;
+    const programs = [...new Set(data.map(subject => subject.course || '').filter(Boolean))].sort();
+    const years = [...new Set(data.map(subject => String(subject.year_level || '')).filter(Boolean))].sort((a, b) => Number(a) - Number(b));
+    courseFilter.innerHTML = '<option value="">All Area Types</option>' + programs.map(program => `<option value="${program}">${resolveProgramLabel(program)}</option>`).join('');
+    yearFilter.innerHTML = '<option value="">All Staff Levels</option>' + years.map(year => `<option value="${year}">${formatYearLabel(year)}</option>`).join('');
+    courseFilter.value = programs.includes(currentCourse) ? currentCourse : '';
+    yearFilter.value = years.includes(currentYear) ? currentYear : '';
+  }
+
+  function updateSubjectsViewState() {
+    document.getElementById('subjectsTitle').textContent = showArchived ? (ROLE === 'supervisor' ? 'Archived My Work Areas' : 'Archived Work Areas') : (ROLE === 'supervisor' ? 'My Work Areas' : 'Manage Work Areas');
+    document.getElementById('subjectsArchiveToggleBtn').textContent = showArchived ? 'Back to Active' : 'View Archived';
+    if (ROLE === 'supervisor') {
+      document.getElementById('subjectsArchiveToggleBtn').classList.add('hidden');
+      document.getElementById('subjectsAddBtn').classList.add('hidden');
+      return;
+    }
+    document.getElementById('subjectsAddBtn').classList.toggle('hidden', showArchived);
+  }
+
+  function toggleArchiveView() {
+    showArchived = !showArchived;
+    updateSubjectsViewState();
+    loadSubjects();
+  }
+
+  function openModal(data = null) {
+    document.getElementById('subjectForm').reset();
+    const selectedCollege = data ? resolveSubjectCollege(data) : '';
+    const selectedProgram = data ? (data.course || '') : '';
+    const selectedSpecialization = data ? (data.specialization || '') : '';
+
+    populateCollegeOptions(selectedCollege);
+    populateProgramOptions(selectedProgram, selectedCollege);
+    populateSpecializationOptions(selectedSpecialization, selectedProgram, selectedCollege);
+
+    document.getElementById('modalTitle').textContent = data ? 'Edit Work Area' : 'Add Work Area';
+    document.getElementById('subjectId').value = data ? data.id : '';
+    document.getElementById('fCode').value = data ? data.code : '';
+    document.getElementById('fName').value = data ? data.name : '';
+    document.getElementById('fUnits').value = data ? data.units : '3';
+    document.getElementById('fYear').value = data ? (data.year_level || '') : '';
+    document.getElementById('fSection').value = data ? (data.section || '') : '';
+    applyTeacherFieldState(data);
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+
+  function editSubject(encoded) { openModal(JSON.parse(decodeURIComponent(encoded))); }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+  }
+
+  document.getElementById('subjectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('subjectId').value;
+    const confirmed = await requestSaveConfirmation({
+      title: id ? 'Update Work Area' : 'Save Work Area',
+      message: id ? 'Do you want to update this work area?' : 'Do you want to save this work area?'
+    });
+    if (!confirmed) return;
+    const payload = {
+      id,
+      code: document.getElementById('fCode').value.trim().toUpperCase(),
+      name: document.getElementById('fName').value.trim(),
+      teacher_id: ROLE === 'supervisor' ? PROFILE_ID : document.getElementById('fTeacherId').value,
+      units: document.getElementById('fUnits').value,
+      college: document.getElementById('fCollege').value.trim(),
+      course: document.getElementById('fCourse').value.trim(),
+      specialization: document.getElementById('fSpecialization').disabled ? '' : document.getElementById('fSpecialization').value.trim(),
+      year_level: document.getElementById('fYear').value,
+      section: document.getElementById('fSection').value.trim()
+    };
+
+    const res = id
+      ? await API.put('/api/subjects', payload)
+      : await API.post('/api/subjects', payload);
+
+    if (res && res.message) {
+      closeModal();
+      loadSubjects();
+      showToast(res.message, 'success');
+    } else {
+      showToast((res && res.error) || 'Unable to save work area', 'error');
+    }
+  });
+
+  async function deleteSubject(id) {
+    const confirmed = await showConfirmModal({
+      title: 'Archive Work Area',
+      message: 'This will move the work area to Archived. You can restore it later. Continue?',
+      confirmText: 'Archive',
+      cancelText: 'No'
+    });
+    if (!confirmed) return;
+    const res = await API.delete('/api/subjects?id=' + id);
+    if (res && res.message) {
+      loadSubjects();
+      showToast('Work area archived', 'success');
+    } else {
+      showToast((res && res.error) || 'Unable to delete work area', 'error');
+    }
+  }
+
+  async function restoreSubject(id) {
+    const confirmed = await showConfirmModal({
+      title: 'Restore Work Area',
+      message: 'Do you want to restore this work area?',
+      confirmText: 'Restore',
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
+    const res = await API.put('/api/subjects', { id, action: 'restore' });
+    if (res && res.message) {
+      loadSubjects();
+      showToast(res.message, 'success');
+    } else {
+      showToast((res && res.error) || 'Unable to restore work area', 'error');
+    }
+  }
+
+  async function permanentlyDeleteSubject(id) {
+    const confirmed = await showConfirmModal({
+      title: 'Permanent Delete Work Area',
+      message: 'This will permanently delete the archived work area and its related timetable and attendance records. Continue?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
+    const res = await API.delete('/api/subjects?id=' + id + '&permanent=1');
+    if (res && res.message) {
+      loadSubjects();
+      showToast(res.message, 'success');
+    } else {
+      showToast((res && res.error) || 'Unable to permanently delete work area', 'error');
+    }
+  }
+
+  function filterTable() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const course = document.getElementById('courseFilter').value;
+    const year = document.getElementById('yearFilter').value;
+    const filtered = subjectsData.filter(subject => {
+      const collegeLabel = resolveSubjectCollege(subject);
+      const programLabel = resolveProgramLabel(subject.course, subject.college);
+      const matchesSearch = [
+        subject.code,
+        subject.name,
+        subject.teacher_name,
+        collegeLabel,
+        programLabel,
+        subject.course,
+        subject.specialization,
+        subject.year_level,
+        subject.section,
+        subject.units
+      ].join(' ').toLowerCase().includes(query);
+      const matchesCourse = !course || subject.course === course;
+      const matchesYear = !year || String(subject.year_level || '') === year;
+      return matchesSearch && matchesCourse && matchesYear;
+    });
+    renderSubjects(filtered);
+  }
+</script>
+</body>
+</html>

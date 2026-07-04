@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - Latte & Letters</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+<div class="login-container login-shell register-shell">
+  <div class="login-card login-stage-card register-stage-card">
+    <section class="login-stage login-stage-minimal register-stage">
+      <div class="login-stage-bg" aria-hidden="true">
+        <span class="login-stage-shape login-stage-shape-a"></span>
+        <span class="login-stage-shape login-stage-shape-b"></span>
+        <span class="login-stage-shape login-stage-shape-c"></span>
+        <span class="login-stage-glow"></span>
+      </div>
+      <div class="auth-stage-brand">
+        <div class="logo-icon" data-brand-variant="full"></div>
+      </div>
+    </section>
+
+    <section class="login-form-panel register-form-panel">
+      <div class="login-logo">
+        <div class="logo-icon">🎓</div>
+        <h1 class="brand-name-text">Latte & Letters</h1>
+        <p>Manager account creation</p>
+      </div>
+      <h2 class="auth-form-heading">Create Account</h2>
+
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step active" id="step1dot"><span>1</span><small>Account</small></div>
+      <div class="step-line"></div>
+      <div class="step" id="step2dot"><span>2</span><small>Profile</small></div>
+      <div class="step-line"></div>
+      <div class="step" id="step3dot"><span>3</span><small>Verify</small></div>
+      <div class="step-line"></div>
+      <div class="step" id="step4dot"><span>4</span><small>Done</small></div>
+    </div>
+
+    <form id="registerForm" onsubmit="return false;">
+
+      <!-- ── Step 1: Account info ── -->
+      <div id="step1" class="auth-step-panel">
+        <div class="form-group">
+          <label for="role">I am a </label>
+          <select id="role" required>
+            <option value="">Select role</option>
+            <option value="staff">Staff</option>
+            <option value="supervisor">Supervisor</option>
+          </select>
+          <small id="roleHint" class="field-hint"></small>
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="Choose a username" required autocomplete="username">
+          <small id="usernameHint" class="field-hint"></small>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="pass-wrap">
+            <input type="password" id="password" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+            <button type="button" class="toggle-pass" onclick="togglePass('password', this)" tabindex="-1">👁</button>
+          </div>
+          <div class="password-strength auth-strength">
+            <div class="strength-fill" id="strengthFill"></div>
+          </div>
+          <small id="passwordHint" class="field-hint"></small>
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="pass-wrap">
+            <input type="password" id="confirmPassword" placeholder="Repeat your password" required autocomplete="new-password">
+            <button type="button" class="toggle-pass" onclick="togglePass('confirmPassword', this)" tabindex="-1">👁</button>
+          </div>
+          <small id="confirmPasswordHint" class="field-hint"></small>
+        </div>
+        <div id="step1Error" class="error-msg hidden"></div>
+        <button type="button" class="btn btn-primary btn-full" onclick="goStep2()">Next →</button>
+      </div>
+
+      <!-- ── Step 2: Profile info ── -->
+      <div id="step2" class="auth-step-panel hidden">
+        <div class="reg-grid">
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" placeholder="e.g. Juan" required minlength="3" oninput="validateName(this,'firstNameHint')">
+            <small id="firstNameHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="middleName">Middle Name <span style="font-weight:400;text-transform:none">(optional)</span></label>
+            <input type="text" id="middleName" placeholder="e.g. Santos" oninput="validateName(this,'middleNameHint',true)">
+            <small id="middleNameHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name </label>
+            <input type="text" id="lastName" placeholder="e.g. Dela Cruz" required minlength="3" oninput="validateName(this,'lastNameHint')">
+            <small id="lastNameHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="email">Email </label>
+            <input type="email" id="email" placeholder="name@gmail.com or name@lu.edu.ph" required>
+            <small id="emailHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="birthDate">Date of Birth</label>
+            <input type="date" id="birthDate" required>
+            <small id="birthDateHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" placeholder="Auto-computed" readonly tabindex="-1">
+            <small id="ageHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="province">Province</label>
+            <input type="text" id="province" value="LAGUNA" readonly required>
+            <small id="provinceHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="municipality">Municipality / City</label>
+            <select id="municipality" required>
+              <option value="">Select municipality or city</option>
+            </select>
+            <small id="municipalityHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="barangay">Barangay</label>
+            <select id="barangay" required disabled>
+              <option value="">Select barangay</option>
+            </select>
+            <small id="barangayHint" class="field-hint"></small>
+          </div>
+          <div class="form-group">
+            <label for="phone">Contact No.</label>
+            <input type="text" id="phone" placeholder="e.g. 09171234567" maxlength="11" oninput="validatePhone(this)">
+            <small id="phoneHint" class="field-hint"></small>
+          </div>
+        </div>
+
+        <!-- Staff-only fields -->
+        <div id="studentFields">
+          <div class="reg-grid" style="margin-top:.75rem">
+            <div class="form-group">
+              <label for="college">Branch / Department</label>
+              <select id="college">
+                <option value="">Select branch / department</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="program">Work Area</label>
+              <select id="program">
+                <option value="">Select branch first</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="specialization">Position</label>
+              <select id="specialization" disabled>
+                <option value="">Select work area first</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="yearLevel">Staff Level</label>
+              <select id="yearLevel">
+                <option value="1">Level 1 - Trainee</option>
+                <option value="2">Level 2 - Regular</option>
+                <option value="3">Level 3 - Senior</option>
+                <option value="4">Level 4 - Lead</option>
+              </select>
+            </div>
+            <div class="form-group">
+            <label for="studentIdPreview">Staff ID</label>
+              <input type="text" id="studentIdPreview" value="251-XXXX" readonly>
+            </div>
+            <div class="form-group">
+              <label for="block">Shift Group</label>
+              <select id="block">
+                <option value="">Select shift group</option>
+                <option value="Opening (6am - 2pm)">Opening (6am - 2pm)</option>
+                <option value="Mid Shift (10am - 6pm)">Mid Shift (10am - 6pm)</option>
+                <option value="Closing (2pm - 10pm)">Closing (2pm - 10pm)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supervisor-only fields -->
+        <div id="teacherFields" class="hidden">
+          <div class="reg-grid" style="margin-top:.75rem">
+            <div class="form-group">
+              <label for="teacherCollege">Branch / Department</label>
+              <select id="teacherCollege">
+                <option value="">Select branch / department</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="teacherProgram">Assigned Area</label>
+              <select id="teacherProgram" disabled>
+                <option value="">Select branch first</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="teacherSpecialization">Position</label>
+              <select id="teacherSpecialization" disabled>
+                <option value="">Select assigned area first</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="step2Error" class="error-msg hidden"></div>
+        <div class="auth-step-actions">
+          <button type="button" class="btn btn-secondary" onclick="goStep1()">← Back</button>
+          <button type="button" class="btn btn-primary" style="flex:1" id="sendOtpBtn" onclick="sendOtpAndGoStep3()">
+            <span>Send Verification Code →</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Step 3: OTP Verification ── -->
+      <div id="step3" class="auth-step-panel hidden">
+        <div class="otp-panel">
+          <div class="otp-panel-head">
+            <span class="otp-panel-kicker">Email Verification</span>
+            <h3 class="otp-panel-title">Enter Verification Code</h3>
+            <p class="otp-panel-copy">We sent a 6-digit code to <strong id="otpEmailDisplay"></strong>. Use it to continue your registration.</p>
+          </div>
+          <div class="form-group auth-otp-group">
+            <label>Verification Code</label>
+            <div class="otp-inputs" id="otpInputs">
+              <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+              <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+              <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+              <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+              <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+              <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            </div>
+            <div class="otp-panel-meta">
+              <div class="otp-timer">Code expires in <span id="otpCountdown">03:00</span></div>
+              <button type="button" class="btn btn-secondary btn-sm" id="resendBtn" onclick="resendOtp()" disabled>Resend Code</button>
+            </div>
+            <p class="otp-panel-note">For your security, only the latest active code will work.</p>
+          </div>
+        </div>
+        <div id="step3Error" class="error-msg hidden"></div>
+        <div class="auth-step-actions auth-step-actions-wide">
+          <button type="button" class="btn btn-secondary" onclick="goBackToStep2()">← Back</button>
+          <button type="button" class="btn btn-primary" style="flex:1" id="verifyBtn" onclick="verifyAndRegister()">
+            <span>Verify & Create Account</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Step 4: Success ── -->
+      <div id="step4" class="hidden">
+        <div class="register-success">
+          <div class="success-icon">✅</div>
+          <h3>Account Created!</h3>
+          <p id="successMsg">Your account has been created successfully.</p>
+          <a href="index.html" class="btn btn-primary btn-full" style="margin-top:1rem">Go to Login →</a>
+        </div>
+      </div>
+
+    </form>
+
+    <div class="login-divider"><span>or</span></div>
+    <a href="dashboard.html" class="btn btn-secondary btn-full" style="text-align:center;">Back to Dashboard</a>
+    </section>
+  </div>
+</div>
+
+<script src="js/laguna-addresses.js"></script>
+<script src="js/app.js"></script>
+<script>
+  requireRole('admin');
+
+  let otpTimer = null;
+  let pendingPayload = null;
+  let usernameCheckTimer = null;
+  let usernameCheckSeq = 0;
+  let usernameAvailabilityState = { value: '', available: null };
+  let usernameStickyErrorValue = '';
+  const lagunaLocationData = window.LAGUNA_LOCATION_DATA || { province: 'LAGUNA', municipalities: [] };
+  const STUDENT_PROGRAM_DIRECTORY = [
+    {
+      name: 'Main Branch',
+      acronym: 'MAIN',
+      programs: [
+        { code: 'Coffee Bar', name: 'Coffee Bar', specializations: ['Barista', 'Drink Prep', 'Cashier'] },
+        { code: 'Library Desk', name: 'Library Desk', specializations: ['Reading Desk', 'Book Cataloging', 'Study Area Support'] }
+      ]
+    },
+    {
+      name: 'Service Floor',
+      acronym: 'FLOOR',
+      programs: [
+        { code: 'Customer Experience', name: 'Customer Experience', specializations: ['Host', 'Floor Attendant', 'Order Runner'] },
+        { code: 'Study Lounge', name: 'Study Lounge', specializations: ['Quiet Zone Monitor', 'Reservation Support'] },
+        { code: 'Events Corner', name: 'Events Corner', specializations: ['Workshop Support', 'Reading Session Support'] }
+      ]
+    },
+    {
+      name: 'Operations',
+      acronym: 'OPS',
+      programs: [
+        { code: 'Inventory and Pantry', name: 'Inventory and Pantry', specializations: ['Stock Clerk', 'Pantry Support', 'Receiving'] }
+      ]
+    },
+    {
+      name: 'Administration',
+      acronym: 'ADMIN',
+      programs: [
+        { code: 'Front Office', name: 'Front Office', specializations: ['Supervisor', 'Admin Assistant'] },
+        { code: 'Finance Counter', name: 'Finance Counter', specializations: ['Cash Audit', 'Sales Report'] }
+      ]
+    }
+  ];
+
+  // ── Password toggle ───────────────────────────────────────
+  function togglePass(id, btn) {
+    const inp = document.getElementById(id);
+    const showPassword = inp.type === 'password';
+    inp.type = showPassword ? 'text' : 'password';
+    btn.setAttribute('aria-label', showPassword ? 'Hide password' : 'Show password');
+    btn.setAttribute('aria-pressed', showPassword ? 'true' : 'false');
+    btn.querySelector('.toggle-pass-eye')?.classList.toggle('hidden', showPassword);
+    btn.querySelector('.toggle-pass-eye-off')?.classList.toggle('hidden', !showPassword);
+  }
+
+  // ── Password strength ─────────────────────────────────────
+  document.getElementById('password').addEventListener('input', function () {
+    const v = this.value;
+    let score = 0;
+    if (v.length >= 6)          score++;
+    if (v.length >= 10)         score++;
+    if (/[A-Z]/.test(v))        score++;
+    if (/[0-9]/.test(v))        score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const colors = ['#a74d3d','#d7a64f','#d7a64f','#A78D78','#6E473B'];
+    document.getElementById('strengthFill').style.width      = v.length ? (score * 20) + '%' : '0';
+    document.getElementById('strengthFill').style.background = v.length ? colors[Math.max(0, score - 1)] : '';
+    validatePassword();
+    checkMatch();
+  });
+
+  document.getElementById('confirmPassword').addEventListener('input', checkMatch);
+  function checkMatch() {
+    const p = document.getElementById('password').value;
+    const c = document.getElementById('confirmPassword').value;
+    const hint = document.getElementById('matchHint');
+    if (!c) { hint.textContent = ''; return; }
+    hint.textContent = p === c ? '✅ Passwords match' : '❌ Passwords do not match';
+    hint.style.color = p === c ? 'var(--success)' : 'var(--danger)';
+  }
+
+  // ── Name validation ───────────────────────────────────────
+  function validateName(input, hintId, optional = false) {
+    applyNameCase(input);
+    const hint = document.getElementById(hintId);
+    const v = input.value.trim();
+    if (!v) { hint.textContent = ''; input.classList.remove('input-error','input-ok'); return; }
+    if (v.length < 3) {
+      hint.textContent = '❌ Must be at least 3 characters'; hint.style.color = 'var(--danger)';
+      input.classList.add('input-error'); input.classList.remove('input-ok');
+    } else if (!/^[a-zA-ZÀ-ÿ\s\-'\.]+$/.test(v)) {
+      hint.textContent = '❌ Letters only'; hint.style.color = 'var(--danger)';
+      input.classList.add('input-error'); input.classList.remove('input-ok');
+    } else {
+      hint.textContent = '✅'; hint.style.color = 'var(--success)';
+      input.classList.remove('input-error'); input.classList.add('input-ok');
+    }
+  }
+
+  // ── Phone validation ──────────────────────────────────────
+  function validatePhone(input) {
+    input.value = input.value.replace(/\D/g, '');
+    const hint = document.getElementById('phoneHint');
+    const v = input.value;
+    if (!v) { hint.textContent = ''; input.classList.remove('input-error','input-ok'); return; }
+    const err = getPhoneError(v);
+    if (err) {
+      hint.textContent = '❌ ' + err; hint.style.color = 'var(--danger)';
+      input.classList.add('input-error'); input.classList.remove('input-ok');
+    } else {
+      hint.textContent = v.length === 11 ? '✅ Valid contact no.' : '';
+      hint.style.color = 'var(--success)';
+      input.classList.remove('input-error');
+      if (v.length === 11) input.classList.add('input-ok');
+    }
+  }
+
+  function getPhoneError(v) {
+    if (v.length > 0 && v[0] !== '0') return 'Must start with 0 (e.g. 09171234567)';
+    if (v.length > 1 && v[1] !== '9') return 'Must start with 09';
+    if (v.length === 11) {
+      if (/^(\d)\1+$/.test(v)) return 'Invalid: all digits are the same';
+      if (/^(.{2})\1{4}/.test(v)) return 'Invalid: repeating pattern detected';
+      const digits = v.split('').map(Number);
+      let asc = true, desc = true;
+      for (let i = 1; i < digits.length; i++) {
+        if (digits[i] !== digits[i-1] + 1) asc = false;
+        if (digits[i] !== digits[i-1] - 1) desc = false;
+      }
+      if (asc)  return 'Invalid: sequential ascending digits';
+      if (desc) return 'Invalid: sequential descending digits';
+      if (/(\d)\1{4,}/.test(v)) return 'Invalid: too many repeated digits in a row';
+    }
+    return null;
+  }
+
+  // ── Step navigation ───────────────────────────────────────
+  function setStep(n) {
+    [1,2,3,4].forEach(i => {
+      const dot = document.getElementById('step' + i + 'dot');
+      if (!dot) return;
+      dot.classList.toggle('active', i === n);
+      dot.classList.toggle('done',   i < n);
+    });
+  }
+
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  function goStep2() {
+    document.getElementById('step1Error').classList.add('hidden');
+    const role     = document.getElementById('role').value;
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm  = document.getElementById('confirmPassword').value;
+    if (!role)     { showErr('step1Error', 'Please select a role'); return; }
+    if (!username) { showErr('step1Error', 'Username is required'); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) { showErr('step1Error', 'Username: letters, numbers, underscores only'); return; }
+    if (password.length < 6) { showErr('step1Error', 'Password must be at least 6 characters'); return; }
+    if (password !== confirm) { showErr('step1Error', 'Passwords do not match'); return; }
+    document.getElementById('studentFields').classList.toggle('hidden', role !== 'staff');
+    document.getElementById('teacherFields').classList.toggle('hidden', role !== 'supervisor');
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    setStep(2);
+  }
+
+  function goStep1() {
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step1').classList.remove('hidden');
+    setStep(1);
+  }
+
+  function goBackToStep2() {
+    clearInterval(otpTimer);
+    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    setStep(2);
+  }
+
+  function studentIdPrefix(yearLevel) {
+    switch (String(yearLevel || '1')) {
+      case '4': return '221-';
+      case '3': return '231-';
+      case '2': return '241-';
+      case '1':
+      default: return '251-';
+    }
+  }
+
+  function updateStudentIdPreview() {
+    const preview = document.getElementById('studentIdPreview');
+    const role = document.getElementById('role').value;
+    if (!preview) return;
+    preview.value = role === 'staff'
+      ? studentIdPrefix(document.getElementById('yearLevel').value) + 'XXXX'
+      : 'N/A';
+  }
+
+  function registerCollegeLabel(college) {
+    return college.acronym ? `${college.name} (${college.acronym})` : college.name;
+  }
+
+  function registerProgramLabel(program) {
+    return program.code && program.code !== program.name ? `${program.name} (${program.code})` : program.name;
+  }
+
+  function registerSpecializationLabel(program, specialization) {
+    return specialization;
+  }
+
+  function findRegisterCollege(collegeName) {
+    return STUDENT_PROGRAM_DIRECTORY.find(item => item.name === collegeName) || null;
+  }
+
+  function findRegisterProgram(programCode, collegeName = '') {
+    const colleges = collegeName
+      ? STUDENT_PROGRAM_DIRECTORY.filter(item => item.name === collegeName)
+      : STUDENT_PROGRAM_DIRECTORY;
+    for (const college of colleges) {
+      const program = college.programs.find(item => item.code === programCode);
+      if (program) return { college, program };
+    }
+    return null;
+  }
+
+  function populateRegisterCollegeOptions(selectedValue = '') {
+    const select = document.getElementById('college');
+    if (!select) return;
+    select.innerHTML = '<option value="">Select branch / department</option>' + STUDENT_PROGRAM_DIRECTORY.map(college =>
+      `<option value="${college.name}">${registerCollegeLabel(college)}</option>`
+    ).join('');
+    if (selectedValue && STUDENT_PROGRAM_DIRECTORY.some(college => college.name === selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  function populateRegisterProgramOptions(selectedValue = '', selectedCollege = document.getElementById('college')?.value || '') {
+    const select = document.getElementById('program');
+    const college = findRegisterCollege(selectedCollege);
+    if (!select) return;
+    if (!college) {
+      select.innerHTML = '<option value="">Select branch first</option>';
+      select.disabled = true;
+      select.value = '';
+      return;
+    }
+    select.disabled = false;
+    select.innerHTML = '<option value="">Select work area</option>' + college.programs.map(program =>
+      `<option value="${program.code}">${registerProgramLabel(program)}</option>`
+    ).join('');
+    if (selectedValue && college.programs.some(program => program.code === selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  function populateRegisterSpecializationOptions(selectedValue = '', selectedProgram = document.getElementById('program')?.value || '', selectedCollege = document.getElementById('college')?.value || '') {
+    const select = document.getElementById('specialization');
+    const match = findRegisterProgram(selectedProgram, selectedCollege);
+    const specializations = match ? match.program.specializations : [];
+    if (!select) return;
+    if (!match) {
+      select.innerHTML = '<option value="">Select work area first</option>';
+      select.disabled = true;
+      select.required = false;
+      select.value = '';
+      return;
+    }
+    if (!specializations.length) {
+      select.innerHTML = '<option value="">No position</option>';
+      select.disabled = true;
+      select.required = false;
+      select.value = '';
+      return;
+    }
+    select.disabled = false;
+    select.required = true;
+    select.innerHTML = '<option value="">Select position</option>' + specializations.map(item =>
+      `<option value="${item}">${item}</option>`
+    ).join('');
+    if (selectedValue && specializations.includes(selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  function initializeRegisterProgramFields() {
+    populateRegisterCollegeOptions();
+    populateRegisterProgramOptions();
+    populateRegisterSpecializationOptions();
+
+    document.getElementById('college')?.addEventListener('change', () => {
+      populateRegisterProgramOptions();
+      populateRegisterSpecializationOptions();
+    });
+
+    document.getElementById('program')?.addEventListener('change', () => {
+      populateRegisterSpecializationOptions();
+    });
+
+    populateRegisterCollegeOptionsForTeacher();
+    populateRegisterProgramOptionsForTeacher();
+    populateRegisterSpecializationOptionsForTeacher();
+
+    document.getElementById('teacherCollege')?.addEventListener('change', () => {
+      populateRegisterProgramOptionsForTeacher();
+      populateRegisterSpecializationOptionsForTeacher();
+    });
+
+    document.getElementById('teacherProgram')?.addEventListener('change', () => {
+      populateRegisterSpecializationOptionsForTeacher();
+    });
+  }
+
+  function populateRegisterCollegeOptionsForTeacher(selectedValue = '') {
+    const select = document.getElementById('teacherCollege');
+    if (!select) return;
+    select.innerHTML = '<option value="">Select branch / department</option>' + STUDENT_PROGRAM_DIRECTORY.map(college =>
+      `<option value="${college.name}">${registerCollegeLabel(college)}</option>`
+    ).join('');
+    if (selectedValue && STUDENT_PROGRAM_DIRECTORY.some(college => college.name === selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  function populateRegisterProgramOptionsForTeacher(selectedValue = '', selectedCollege = document.getElementById('teacherCollege')?.value || '') {
+    const select = document.getElementById('teacherProgram');
+    const college = findRegisterCollege(selectedCollege);
+    if (!select) return;
+    if (!college) {
+      select.innerHTML = '<option value="">Select branch first</option>';
+      select.disabled = true;
+      select.value = '';
+      return;
+    }
+    select.disabled = false;
+    select.innerHTML = '<option value="">Select assigned area</option>' + college.programs.map(program =>
+      `<option value="${program.code}">${registerProgramLabel(program)}</option>`
+    ).join('');
+    if (selectedValue && college.programs.some(program => program.code === selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  function populateRegisterSpecializationOptionsForTeacher(selectedValue = '', selectedProgram = document.getElementById('teacherProgram')?.value || '', selectedCollege = document.getElementById('teacherCollege')?.value || '') {
+    const select = document.getElementById('teacherSpecialization');
+    const match = findRegisterProgram(selectedProgram, selectedCollege);
+    const specializations = match ? match.program.specializations : [];
+    if (!select) return;
+    if (!match) {
+      select.innerHTML = '<option value="">Select assigned area first</option>';
+      select.disabled = true;
+      select.required = false;
+      select.value = '';
+      return;
+    }
+    if (!specializations.length) {
+      select.innerHTML = '<option value="">No position</option>';
+      select.disabled = true;
+      select.required = false;
+      select.value = '';
+      return;
+    }
+    select.disabled = false;
+    select.required = true;
+    select.innerHTML = '<option value="">Select position</option>' + specializations.map(item =>
+      `<option value="${item}">${registerSpecializationLabel(match.program, item)}</option>`
+    ).join('');
+    if (selectedValue && specializations.includes(selectedValue)) {
+      select.value = selectedValue;
+    }
+  }
+
+  function getLagunaMunicipalities() {
+    return Array.isArray(lagunaLocationData.municipalities) ? lagunaLocationData.municipalities : [];
+  }
+
+  function repairLocationEncoding(value) {
+    const text = String(value || '').trim();
+    if (!text || !/[ÃÂâ]/.test(text)) return text;
+    try {
+      const percentEncoded = Array.from(text)
+        .map(ch => '%' + ch.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('');
+      return decodeURIComponent(percentEncoded);
+    } catch (error) {
+      return text
+        .replace(/Ã±/g, 'ñ')
+        .replace(/Ã‘|Ã/g, 'Ñ')
+        .replace(/Ã¡/g, 'á')
+        .replace(/Ã©/g, 'é')
+        .replace(/Ã­/g, 'í')
+        .replace(/Ã³/g, 'ó')
+        .replace(/Ãº/g, 'ú');
+    }
+  }
+
+  function formatLocationLabel(value) {
+    let label = repairLocationEncoding(value);
+    if (!label) return '';
+    label = label.replace(/\s+\(Capital\)$/i, '');
+    if (/^CITY OF /i.test(label)) label = label.replace(/^CITY OF /i, '') + ' CITY';
+    label = label
+      .toLowerCase()
+      .replace(/\b([a-z\u00c0-\u00ff])/g, match => match.toUpperCase())
+      .replace(/\bOf\b/g, 'of')
+      .replace(/\bAnd\b/g, 'and');
+    return label;
+  }
+
+  function formatBarangayLabel(value) {
+    return repairLocationEncoding(value).replace(/\s+/g, ' ').trim();
+  }
+
+  function populateProvinceField() {
+    const province = document.getElementById('province');
+    if (!province) return;
+    province.value = lagunaLocationData.province || 'LAGUNA';
+  }
+
+  function populateMunicipalityOptions(selectedCode = '') {
+    const municipality = document.getElementById('municipality');
+    if (!municipality) return;
+
+    municipality.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select municipality or city';
+    municipality.appendChild(placeholder);
+
+    getLagunaMunicipalities().forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.code;
+      option.textContent = formatLocationLabel(item.name);
+      municipality.appendChild(option);
+    });
+
+    municipality.value = selectedCode || '';
+  }
+
+  function getSelectedMunicipalityData() {
+    const municipalityCode = document.getElementById('municipality')?.value || '';
+    return getLagunaMunicipalities().find(item => item.code === municipalityCode) || null;
+  }
+
+  function getSelectedMunicipalityLabel() {
+    const municipality = getSelectedMunicipalityData();
+    return municipality ? formatLocationLabel(municipality.name) : '';
+  }
+
+  function populateBarangayOptions(municipalityCode = '', selectedBarangay = '') {
+    const barangay = document.getElementById('barangay');
+    if (!barangay) return;
+
+    const municipality = getLagunaMunicipalities().find(item => item.code === municipalityCode);
+    barangay.innerHTML = '';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = municipality ? 'Select barangay' : 'Select municipality or city first';
+    barangay.appendChild(placeholder);
+
+    if (!municipality) {
+      barangay.disabled = true;
+      barangay.value = '';
+      return;
+    }
+
+    municipality.barangays.forEach(name => {
+      const fixedName = formatBarangayLabel(name);
+      const option = document.createElement('option');
+      option.value = fixedName;
+      option.textContent = fixedName;
+      barangay.appendChild(option);
+    });
+
+    barangay.disabled = false;
+    barangay.value = formatBarangayLabel(selectedBarangay || '');
+  }
+
+  function initializeLagunaAddressFields() {
+    populateProvinceField();
+    populateMunicipalityOptions();
+    populateBarangayOptions('');
+  }
+
+  // ── OTP box auto-advance ──────────────────────────────────
+  document.querySelectorAll('#otpInputs .otp-box').forEach((box, i, boxes) => {
+    box.addEventListener('input', () => {
+      box.value = box.value.replace(/\D/,'');
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+    });
+    box.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+    });
+  });
+
+  function getOtpValue() {
+    return [...document.querySelectorAll('#otpInputs .otp-box')].map(b => b.value).join('');
+  }
+
+  function startOtpTimer() {
+    clearInterval(otpTimer);
+    let secs = 180;
+    const el = document.getElementById('otpCountdown');
+    const resend = document.getElementById('resendBtn');
+    resend.disabled = true;
+    otpTimer = setInterval(() => {
+      secs--;
+      el.textContent = String(Math.floor(secs / 60)).padStart(2,'0') + ':' + String(secs % 60).padStart(2,'0');
+      if (secs <= 0) { clearInterval(otpTimer); el.textContent = 'Expired'; resend.disabled = false; }
+    }, 1000);
+  }
+
+  document.getElementById('role').addEventListener('change', updateStudentIdPreview);
+  document.getElementById('yearLevel').addEventListener('change', updateStudentIdPreview);
+  updateStudentIdPreview();
+  setBirthDateBounds();
+  initializeLagunaAddressFields();
+  initializeRegisterProgramFields();
+  bindAutoNameCase(['firstName', 'middleName', 'lastName']);
+
+  // ── Step 2 → Step 3: validate + send OTP ─────────────────
+  async function sendOtpAndGoStep3() {
+    document.getElementById('step2Error').classList.add('hidden');
+    const firstName  = document.getElementById('firstName').value.trim();
+    const middleName = document.getElementById('middleName').value.trim();
+    const lastName   = document.getElementById('lastName').value.trim();
+    const email      = normalizeEmailValue(document.getElementById('email').value);
+
+    if (!firstName || firstName.length < 3) { showErr('step2Error', 'First name must be at least 3 characters'); return; }
+    if (!lastName  || lastName.length  < 3) { showErr('step2Error', 'Last name must be at least 3 characters');  return; }
+    if (middleName && middleName.length < 3) { showErr('step2Error', 'Middle name must be at least 3 characters if provided'); return; }
+    const emailError = getEmailError(email);
+    if (emailError) { showErr('step2Error', emailError); return; }
+
+    const phoneVal = document.getElementById('phone').value.trim();
+    if (phoneVal) {
+      const phoneErr = getPhoneError(phoneVal);
+      if (phoneErr) { showErr('step2Error', 'Contact No.: ' + phoneErr); return; }
+      if (phoneVal.length !== 11) { showErr('step2Error', 'Contact No. must be exactly 11 digits'); return; }
+    }
+
+    const role = document.getElementById('role').value;
+    pendingPayload = {
+      username:  document.getElementById('username').value.trim(),
+      password:  document.getElementById('password').value,
+      role,
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
+      full_name: [firstName, middleName, lastName].filter(Boolean).join(' '),
+      email,
+      phone: phoneVal,
+    };
+    if (role === 'staff') {
+      pendingPayload.course     = document.getElementById('course').value.trim();
+      pendingPayload.year_level = document.getElementById('yearLevel').value;
+      pendingPayload.section    = document.getElementById('section').value.trim();
+    } else {
+      pendingPayload.department = document.getElementById('department').value.trim();
+      pendingPayload.subject    = document.getElementById('subject').value.trim();
+    }
+
+    const btn = document.getElementById('sendOtpBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Sending code...';
+
+    const res = await API.post('/api/send-otp', { email, purpose: 'register' });
+    btn.disabled = false;
+    btn.innerHTML = '<span>Send Verification Code →</span>';
+
+    if (res.message) {
+      document.getElementById('otpEmailDisplay').textContent = email;
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step3').classList.remove('hidden');
+      setStep(3);
+      startOtpTimer();
+      document.querySelectorAll('#otpInputs .otp-box')[0].focus();
+    } else {
+      showErr('step2Error', res.error || 'Failed to send code');
+    }
+  }
+
+  async function resendOtp() {
+    if (!pendingPayload) return;
+    document.getElementById('step3Error').classList.add('hidden');
+    document.getElementById('resendBtn').disabled = true;
+    const res = await API.post('/api/send-otp', { email: pendingPayload.email, purpose: 'register' });
+    if (res.message) { showToast('Code resent!', 'success'); startOtpTimer(); }
+    else showErr('step3Error', res.error || 'Failed to resend');
+  }
+
+  // ── Verify OTP then register ──────────────────────────────
+  async function verifyAndRegister() {
+    document.getElementById('step3Error').classList.add('hidden');
+    const otp = getOtpValue();
+    if (otp.length < 6) { showErr('step3Error', 'Enter the 6-digit code'); return; }
+
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Verifying...';
+
+    const verRes = await API.post('/api/verify-otp', { email: pendingPayload.email, otp, purpose: 'register' });
+    if (!verRes.verified) {
+      document.querySelectorAll('#otpInputs .otp-box').forEach(b => b.classList.add('otp-error'));
+      setTimeout(() => document.querySelectorAll('#otpInputs .otp-box').forEach(b => b.classList.remove('otp-error')), 500);
+      showErr('step3Error', verRes.error || 'Invalid or expired code');
+      btn.disabled = false;
+      btn.innerHTML = '<span>Verify & Create Account</span>';
+      return;
+    }
+
+    btn.innerHTML = '<span class="spinner"></span> Creating account...';
+    const res = await API.post('/api/register', pendingPayload);
+    if (res.message) {
+      clearInterval(otpTimer);
+      document.getElementById('step3').classList.add('hidden');
+      document.getElementById('step4').classList.remove('hidden');
+      document.getElementById('successMsg').textContent =
+        pendingPayload.role === 'staff'
+          ? `Staff account created for ${pendingPayload.full_name}. Staff ID: ${res.student_id}.`
+          : `Supervisor account created for ${pendingPayload.full_name}.`;
+      setStep(4);
+    } else {
+      if (res.error === 'Username already taken') {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Verify & Create Account</span>';
+        showUsernameTakenInline(res.error);
+        return;
+      }
+      showErr('step3Error', res.error || 'Registration failed');
+      btn.disabled = false;
+      btn.innerHTML = '<span>Verify & Create Account</span>';
+    }
+  }
+
+  function setFieldHint(id, message = '') {
+    const hint = document.getElementById(id);
+    if (!hint) return;
+    hint.textContent = message || '';
+    hint.classList.toggle('is-error', !!message);
+  }
+
+  function shouldValidate(input, value, force = false) {
+    return force || input.dataset.touched === 'true' || !!value;
+  }
+
+  function updateFieldState(input, error, hintId) {
+    const normalizedError = error || '';
+    setFieldHint(hintId, normalizedError);
+    input.classList.toggle('input-error', !!normalizedError);
+    input.classList.toggle('input-ok', !!String(input.value || '').trim() && !normalizedError);
+    return !normalizedError;
+  }
+
+  function focusField(id) {
+    const field = document.getElementById(id);
+    if (!field) return;
+    field.focus();
+    if (typeof field.select === 'function' && !field.readOnly) field.select();
+  }
+
+  function showUsernameTakenInline(message = 'Username already taken') {
+    const usernameInput = document.getElementById('username');
+    usernameAvailabilityState = { value: usernameInput.value.trim(), available: false };
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('step1').classList.remove('hidden');
+    setStep(1);
+    updateFieldState(usernameInput, message, 'usernameHint');
+    focusField('username');
+  }
+
+  function clearStepInlineErrors() {
+    ['step1Error', 'step2Error'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+  }
+
+  function getUsernameError(value) {
+    if (!value) return 'Username is required';
+    if (value.length < 3) return 'Username must be at least 3 characters';
+    if (!/^[a-zA-Z0-9_]+$/.test(value)) return 'Use letters, numbers, and underscores only';
+    return null;
+  }
+
+  function getPasswordError(value) {
+    if (!value) return 'Password is required';
+    if (value.length < 6) return 'Password must be at least 6 characters';
+    return null;
+  }
+
+  function getNameError(value, label, optional = false) {
+    if (!value) return optional ? null : `${label} is required`;
+    if (value.length < 3) return `${label} must be at least 3 characters`;
+    if (!/^[a-zA-ZÀ-ÿ\s\-'\.]+$/.test(value)) return `${label} must contain letters only`;
+    return null;
+  }
+
+  function formatDateInputValue(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function parseBirthDateValue(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec((value || '').trim());
+    if (!match) return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(year, month - 1, day);
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) return null;
+    return { year, month, day };
+  }
+
+  function getAgeFromBirthDate(value) {
+    const parsed = parseBirthDateValue(value);
+    if (!parsed) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - parsed.year;
+    const monthDiff = today.getMonth() - (parsed.month - 1);
+    const dayDiff = today.getDate() - parsed.day;
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age--;
+    return age;
+  }
+
+  function setBirthDateBounds() {
+    const birthDateInput = document.getElementById('birthDate');
+    if (!birthDateInput) return;
+
+    birthDateInput.max = '2035-12-31';
+    birthDateInput.removeAttribute('min');
+  }
+
+  function getBirthDateError(value) {
+    if (!value) return 'Date of birth is required';
+    const age = getAgeFromBirthDate(value);
+    if (age === null) return 'Enter a valid date of birth';
+    if (age < 15 || age > 80) return 'Age must be between 15 and 80 years old';
+    return null;
+  }
+
+  function validateBirthDate(force = false) {
+    const input = document.getElementById('birthDate');
+    const ageInput = document.getElementById('age');
+    const value = input.value;
+    const age = getAgeFromBirthDate(value);
+    const shouldCheck = shouldValidate(input, value, force);
+    const error = shouldCheck ? (getBirthDateError(value) || '') : '';
+
+    ageInput.value = Number.isInteger(age) ? String(age) : '';
+    setFieldHint('ageHint', error);
+    ageInput.classList.toggle('input-error', !!error && shouldCheck);
+    ageInput.classList.toggle('input-ok', !!ageInput.value && !error);
+    return updateFieldState(input, error, 'birthDateHint');
+  }
+
+  function validateProvince(force = false) {
+    const input = document.getElementById('province');
+    const value = String(input.value || '').trim().toUpperCase();
+    input.value = value;
+    const error = shouldValidate(input, value, force)
+      ? (!value ? 'Province is required' : value !== 'LAGUNA' ? 'Province must be LAGUNA' : '')
+      : '';
+    return updateFieldState(input, error, 'provinceHint');
+  }
+
+  function validateMunicipality(force = false) {
+    const input = document.getElementById('municipality');
+    const value = input.value;
+    const hasSelection = !!getSelectedMunicipalityData();
+    const error = shouldValidate(input, value, force)
+      ? (!value || !hasSelection ? 'Please select a municipality or city' : '')
+      : '';
+    return updateFieldState(input, error, 'municipalityHint');
+  }
+
+  function validateBarangay(force = false) {
+    const input = document.getElementById('barangay');
+    const municipalityCode = document.getElementById('municipality').value;
+    const value = input.value;
+    const error = shouldValidate(input, value, force)
+      ? (!municipalityCode ? 'Select a municipality or city first' : !value ? 'Please select a barangay' : '')
+      : '';
+    return updateFieldState(input, error, 'barangayHint');
+  }
+
+  function validateRole(force = false) {
+    const input = document.getElementById('role');
+    const value = input.value;
+    const error = shouldValidate(input, value, force) ? (!value ? 'Please select a role' : '') : '';
+    return updateFieldState(input, error, 'roleHint');
+  }
+
+  function validateUsername(force = false) {
+    const input = document.getElementById('username');
+    const value = input.value.trim();
+    input.value = value;
+    if (usernameStickyErrorValue && value === usernameStickyErrorValue) {
+      return updateFieldState(input, 'Username already taken', 'usernameHint');
+    }
+    const error = shouldValidate(input, value, force) ? (getUsernameError(value) || '') : '';
+    return updateFieldState(input, error, 'usernameHint');
+  }
+
+  async function checkUsernameAvailability(value, requestId) {
+    const input = document.getElementById('username');
+    const currentValue = input.value.trim();
+    if (requestId !== usernameCheckSeq || currentValue !== value) return;
+
+    const result = await API.get(`/api/check-username?username=${encodeURIComponent(value)}`);
+    if (requestId !== usernameCheckSeq || input.value.trim() !== value) return;
+
+    if (result && result.available) {
+      usernameStickyErrorValue = '';
+      usernameAvailabilityState = { value, available: true };
+      updateFieldState(input, '', 'usernameHint');
+      return;
+    }
+
+    usernameStickyErrorValue = value;
+    usernameAvailabilityState = { value, available: false };
+    const error = result && result.error === 'Username already taken'
+      ? result.error
+      : '';
+    updateFieldState(input, error, 'usernameHint');
+  }
+
+  function scheduleUsernameAvailabilityCheck() {
+    const input = document.getElementById('username');
+    const value = input.value.trim();
+    const syntaxError = getUsernameError(value);
+    const previousStickyValue = usernameStickyErrorValue;
+
+    clearTimeout(usernameCheckTimer);
+    usernameCheckSeq++;
+
+    if (!value) {
+      usernameStickyErrorValue = '';
+      usernameAvailabilityState = { value: '', available: null };
+      updateFieldState(input, '', 'usernameHint');
+      return;
+    }
+
+    if (previousStickyValue && value === previousStickyValue) {
+      updateFieldState(input, 'Username already taken', 'usernameHint');
+      return;
+    }
+
+    if (previousStickyValue && value !== previousStickyValue) {
+      usernameStickyErrorValue = '';
+      usernameAvailabilityState = { value: '', available: null };
+      updateFieldState(input, '', 'usernameHint');
+    }
+
+    if (syntaxError) {
+      usernameAvailabilityState = { value, available: null };
+      updateFieldState(input, '', 'usernameHint');
+      return;
+    }
+
+    const requestId = usernameCheckSeq;
+    usernameCheckTimer = setTimeout(() => {
+      checkUsernameAvailability(value, requestId);
+    }, 260);
+  }
+
+  async function ensureUsernameAvailable() {
+    const input = document.getElementById('username');
+    const value = input.value.trim();
+    input.value = value;
+
+    const syntaxError = getUsernameError(value);
+    if (syntaxError) {
+      usernameStickyErrorValue = '';
+      usernameAvailabilityState = { value, available: null };
+      return updateFieldState(input, syntaxError, 'usernameHint');
+    }
+
+    if (usernameAvailabilityState.value === value && usernameAvailabilityState.available === true) {
+      usernameStickyErrorValue = '';
+      return updateFieldState(input, '', 'usernameHint');
+    }
+
+    if (usernameAvailabilityState.value === value && usernameAvailabilityState.available === false) {
+      usernameStickyErrorValue = value;
+      return updateFieldState(input, 'Username already taken', 'usernameHint');
+    }
+
+    const result = await API.get(`/api/check-username?username=${encodeURIComponent(value)}`);
+    if (result && result.available) {
+      usernameStickyErrorValue = '';
+      usernameAvailabilityState = { value, available: true };
+      return updateFieldState(input, '', 'usernameHint');
+    }
+
+    usernameStickyErrorValue = value;
+    usernameAvailabilityState = { value, available: false };
+    return updateFieldState(input, 'Username already taken', 'usernameHint');
+  }
+
+  function validatePassword(force = false) {
+    const input = document.getElementById('password');
+    const value = input.value;
+    const error = shouldValidate(input, value, force) ? (getPasswordError(value) || '') : '';
+    return updateFieldState(input, error, 'passwordHint');
+  }
+
+  function validateConfirmPassword(force = false) {
+    const passwordValue = document.getElementById('password').value;
+    const input = document.getElementById('confirmPassword');
+    const value = input.value;
+    let error = '';
+
+    if (shouldValidate(input, value, force)) {
+      if (!value) error = 'Please confirm your password';
+      else if (passwordValue !== value) error = 'Passwords do not match';
+    }
+
+    return updateFieldState(input, error, 'confirmPasswordHint');
+  }
+
+  function validateEmailField(force = false) {
+    const input = document.getElementById('email');
+    const value = normalizeEmailValue(input.value);
+    input.value = value;
+    const error = shouldValidate(input, value, force) ? (getEmailError(value) || '') : '';
+    return updateFieldState(input, error, 'emailHint');
+  }
+
+  function validateName(input, hintId, optional = false) {
+    applyNameCase(input);
+    const value = input.value.trim().replace(/\s{2,}/g, ' ');
+    input.value = value;
+    const label = input.labels?.[0]?.textContent.replace('*', '').trim() || 'This field';
+    const error = shouldValidate(input, value, false) ? (getNameError(value, label, optional) || '') : '';
+    return updateFieldState(input, error, hintId);
+  }
+
+  function validatePhone(input, force = false) {
+    input.value = input.value.replace(/\D/g, '');
+    const value = input.value;
+    let error = '';
+
+    if (shouldValidate(input, value, force)) {
+      if (!value) error = 'Contact No. is required';
+      else {
+        error = getPhoneError(value) || '';
+        if (!error && value.length !== 11) error = 'Contact No. must be exactly 11 digits';
+      }
+    }
+
+    return updateFieldState(input, error, 'phoneHint');
+  }
+
+  function checkMatch() {
+    return validateConfirmPassword();
+  }
+
+  async function goStep2() {
+    clearStepInlineErrors();
+    const usernameValid = await ensureUsernameAvailable();
+    const checks = [
+      { valid: validateRole(true), field: 'role' },
+      { valid: usernameValid, field: 'username' },
+      { valid: validatePassword(true), field: 'password' },
+      { valid: validateConfirmPassword(true), field: 'confirmPassword' }
+    ];
+
+    const firstInvalid = checks.find(item => !item.valid);
+    if (firstInvalid) {
+      focusField(firstInvalid.field);
+      return;
+    }
+
+    const role = document.getElementById('role').value;
+    document.getElementById('studentFields').classList.toggle('hidden', role !== 'staff');
+    document.getElementById('teacherFields').classList.toggle('hidden', role !== 'supervisor');
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    setStep(2);
+  }
+
+  async function sendOtpAndGoStep3() {
+    clearStepInlineErrors();
+
+    const firstNameInput = document.getElementById('firstName');
+    const middleNameInput = document.getElementById('middleName');
+    const lastNameInput = document.getElementById('lastName');
+    const emailInput = document.getElementById('email');
+    const birthDateInput = document.getElementById('birthDate');
+    const provinceInput = document.getElementById('province');
+    const municipalityInput = document.getElementById('municipality');
+    const barangayInput = document.getElementById('barangay');
+    const phoneInput = document.getElementById('phone');
+
+    firstNameInput.dataset.touched = 'true';
+    middleNameInput.dataset.touched = 'true';
+    lastNameInput.dataset.touched = 'true';
+    emailInput.dataset.touched = 'true';
+    birthDateInput.dataset.touched = 'true';
+    provinceInput.dataset.touched = 'true';
+    municipalityInput.dataset.touched = 'true';
+    barangayInput.dataset.touched = 'true';
+    phoneInput.dataset.touched = 'true';
+
+    const checks = [
+      { valid: validateName(firstNameInput, 'firstNameHint'), field: 'firstName' },
+      { valid: validateName(middleNameInput, 'middleNameHint', true), field: 'middleName' },
+      { valid: validateName(lastNameInput, 'lastNameHint'), field: 'lastName' },
+      { valid: validateEmailField(true), field: 'email' },
+      { valid: validateBirthDate(true), field: 'birthDate' },
+      { valid: validateProvince(true), field: 'province' },
+      { valid: validateMunicipality(true), field: 'municipality' },
+      { valid: validateBarangay(true), field: 'barangay' },
+      { valid: validatePhone(phoneInput, false), field: 'phone' }
+    ];
+
+    const firstInvalid = checks.find(item => !item.valid);
+    if (firstInvalid) {
+      focusField(firstInvalid.field);
+      return;
+    }
+
+    const firstName = firstNameInput.value.trim();
+    const middleName = middleNameInput.value.trim();
+    const lastName = lastNameInput.value.trim();
+    const email = normalizeEmailValue(emailInput.value);
+    const birthDate = birthDateInput.value;
+    const province = provinceInput.value;
+    const municipality = getSelectedMunicipalityLabel();
+    const barangay = barangayInput.value;
+    const phoneVal = phoneInput.value.trim();
+    const role = document.getElementById('role').value;
+    const college = document.getElementById('college').value.trim();
+    const program = document.getElementById('program').value.trim();
+    const specializationSelect = document.getElementById('specialization');
+    const specialization = specializationSelect.disabled ? '' : specializationSelect.value.trim();
+    const teacherCollege = document.getElementById('teacherCollege').value.trim();
+    const teacherProgram = document.getElementById('teacherProgram').value.trim();
+    const teacherSpecializationSelect = document.getElementById('teacherSpecialization');
+    const teacherSpecialization = teacherSpecializationSelect.disabled ? '' : teacherSpecializationSelect.value.trim();
+    const yearLevel = document.getElementById('yearLevel').value;
+    const block = document.getElementById('block').value.trim();
+
+    if (role === 'staff') {
+      if (!college) {
+        showErr('step2Error', 'Please select a branch / department');
+        focusField('college');
+        return;
+      }
+      if (!program) {
+        showErr('step2Error', 'Please select a work area');
+        focusField('program');
+        return;
+      }
+      if (!block) {
+        showErr('step2Error', 'Please enter a shift group');
+        focusField('block');
+        return;
+      }
+      if (specializationSelect && !specializationSelect.disabled && !specialization) {
+        showErr('step2Error', 'Please select a position');
+        focusField('specialization');
+        return;
+      }
+    } else {
+      if (!teacherCollege) {
+        showErr('step2Error', 'Please select a branch / department');
+        focusField('teacherCollege');
+        return;
+      }
+      if (!teacherProgram) {
+        showErr('step2Error', 'Please select an assigned area');
+        focusField('teacherProgram');
+        return;
+      }
+      if (teacherSpecializationSelect && !teacherSpecializationSelect.disabled && !teacherSpecialization) {
+        showErr('step2Error', 'Please select a position');
+        focusField('teacherSpecialization');
+        return;
+      }
+    }
+
+    pendingPayload = {
+      username: document.getElementById('username').value.trim(),
+      password: document.getElementById('password').value,
+      role,
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
+      full_name: [firstName, middleName, lastName].filter(Boolean).join(' '),
+      email,
+      date_of_birth: birthDate,
+      province,
+      municipality,
+      barangay,
+      phone: phoneVal,
+    };
+
+    if (role === 'staff') {
+      pendingPayload.college = college;
+      pendingPayload.course = program;
+      pendingPayload.specialization = specialization;
+      pendingPayload.year_level = yearLevel;
+      pendingPayload.section = block;
+    } else {
+      pendingPayload.department = teacherCollege;
+      pendingPayload.subject = teacherProgram;
+      pendingPayload.specialization = teacherSpecialization;
+    }
+
+    const btn = document.getElementById('sendOtpBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Sending code...';
+
+    const res = await API.post('/api/send-otp', { email, purpose: 'register' });
+    btn.disabled = false;
+    btn.innerHTML = '<span>Send Verification Code →</span>';
+
+    if (res.message) {
+      setFieldHint('emailHint', '');
+      document.getElementById('otpEmailDisplay').textContent = email;
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step3').classList.remove('hidden');
+      setStep(3);
+      startOtpTimer();
+      document.querySelectorAll('#otpInputs .otp-box')[0].focus();
+    } else {
+      updateFieldState(emailInput, res.error || 'Failed to send verification code', 'emailHint');
+      focusField('email');
+    }
+  }
+
+  function bindRegisterInlineValidation() {
+    const role = document.getElementById('role');
+    role.addEventListener('change', () => {
+      role.dataset.touched = 'true';
+      validateRole(true);
+    });
+    role.addEventListener('blur', () => {
+      role.dataset.touched = 'true';
+      validateRole(true);
+    });
+
+    const username = document.getElementById('username');
+    username.addEventListener('input', () => scheduleUsernameAvailabilityCheck());
+    username.addEventListener('blur', () => {
+      username.dataset.touched = 'true';
+      scheduleUsernameAvailabilityCheck();
+    });
+
+    const password = document.getElementById('password');
+    password.addEventListener('blur', () => {
+      password.dataset.touched = 'true';
+      validatePassword(true);
+      validateConfirmPassword(!!document.getElementById('confirmPassword').value);
+    });
+
+    const confirmPassword = document.getElementById('confirmPassword');
+    confirmPassword.addEventListener('blur', () => {
+      confirmPassword.dataset.touched = 'true';
+      validateConfirmPassword(true);
+    });
+
+    const email = document.getElementById('email');
+    email.addEventListener('input', () => validateEmailField());
+    email.addEventListener('blur', () => {
+      email.dataset.touched = 'true';
+      validateEmailField(true);
+    });
+
+    const birthDate = document.getElementById('birthDate');
+    birthDate.addEventListener('input', () => validateBirthDate());
+    birthDate.addEventListener('change', () => validateBirthDate());
+    birthDate.addEventListener('blur', () => {
+      birthDate.dataset.touched = 'true';
+      validateBirthDate(true);
+    });
+
+    const province = document.getElementById('province');
+    province.addEventListener('change', () => {
+      province.dataset.touched = 'true';
+      validateProvince(true);
+    });
+    province.addEventListener('blur', () => {
+      province.dataset.touched = 'true';
+      validateProvince(true);
+    });
+
+    const municipality = document.getElementById('municipality');
+    municipality.addEventListener('change', () => {
+      municipality.dataset.touched = 'true';
+      populateBarangayOptions(municipality.value);
+      validateMunicipality(true);
+      const barangay = document.getElementById('barangay');
+      delete barangay.dataset.touched;
+      validateBarangay(false);
+    });
+    municipality.addEventListener('blur', () => {
+      municipality.dataset.touched = 'true';
+      validateMunicipality(true);
+    });
+
+    const barangay = document.getElementById('barangay');
+    barangay.addEventListener('change', () => {
+      barangay.dataset.touched = 'true';
+      validateBarangay(true);
+    });
+    barangay.addEventListener('blur', () => {
+      barangay.dataset.touched = 'true';
+      validateBarangay(true);
+    });
+
+    [
+      ['firstName', 'firstNameHint', false],
+      ['middleName', 'middleNameHint', true],
+      ['lastName', 'lastNameHint', false]
+    ].forEach(([id, hintId, optional]) => {
+      const input = document.getElementById(id);
+      input.addEventListener('blur', () => {
+        input.dataset.touched = 'true';
+        validateName(input, hintId, optional);
+      });
+    });
+
+    const phone = document.getElementById('phone');
+    phone.addEventListener('blur', () => {
+      phone.dataset.touched = 'true';
+      validatePhone(phone, true);
+    });
+  }
+
+  bindRegisterInlineValidation();
+</script>
+</body>
+</html>

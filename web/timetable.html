@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shift Schedules - Latte & Letters</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-icon"></div><span class="logo-text">Latte & Letters</span></div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">-</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-bar">
+      <button type="button" class="btn-icon" onclick="toggleSidebar()">&#9776; Menu</button>
+      <h2 class="page-title">Schedules</h2>
+      <div class="top-bar-right" id="ttAddBtn">
+        <button type="button" class="btn btn-primary" onclick="openModal()">+ Add Schedule</button>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <div class="filter-bar calendar-filter-bar">
+        <div class="calendar-nav">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)">Prev</button>
+          <div class="calendar-month-title" id="calendarMonthTitle">Month</div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">Next</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="goToCurrentMonth()">Today</button>
+        </div>
+        <div class="form-group inline">
+          <label>Search</label>
+          <input type="text" id="ttSearch" class="search-input" placeholder="Search schedules..." oninput="filterTimetable()">
+        </div>
+        <div class="form-group inline">
+          <label>Day</label>
+          <select id="ttDayFilter" class="search-input" onchange="filterTimetable()">
+            <option value="">All Days</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option>
+          </select>
+        </div>
+        <div class="form-group inline">
+          <label>Work Area</label>
+          <select id="ttSubjectFilter" class="search-input" onchange="filterTimetable()"><option value="">All Work Areas</option></select>
+        </div>
+      </div>
+
+      <div class="timetable-grid calendar-view" id="timetableGrid">
+        <div class="loading-row">Loading...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Schedule</h3>
+      <button type="button" class="btn-icon" onclick="closeModal()">x</button>
+    </div>
+    <form id="ttForm">
+      <div class="form-group">
+        <label>Work Area</label>
+        <select id="fSubject" required><option value="">Select work area</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Day</label>
+          <select id="fDay" required>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Start Time</label><input type="time" id="fStart" required></div>
+        <div class="form-group"><label>End Time</label><input type="time" id="fEnd" required></div>
+      </div>
+      <div class="form-group"><label>Station / Area</label><input type="text" id="fRoom" placeholder="e.g. Coffee Bar Counter" required></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  requireAuth();
+  renderNav();
+
+  const ROLE = localStorage.getItem('role');
+  const CALENDAR_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const SCHEDULE_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  let timetableData = [];
+  let calendarDate = new Date();
+
+  if (ROLE === 'staff' || ROLE === 'supervisor') {
+    document.getElementById('ttAddBtn').classList.add('hidden');
+  }
+
+  loadSubjectOptions();
+  loadTimetable();
+
+  async function loadSubjectOptions() {
+    const data = await API.get('/api/subjects');
+    const sel = document.getElementById('fSubject');
+    if (!data) return;
+    sel.innerHTML = '<option value="">Select work area</option>' + data.map(subject =>
+      `<option value="${subject.id}">${subject.name} (${subject.code})</option>`
+    ).join('');
+  }
+
+  async function loadTimetable() {
+    const data = await API.get('/api/timetable');
+    timetableData = data || [];
+    populateTimetableFilters(timetableData);
+    filterTimetable();
+  }
+
+  function populateTimetableFilters(data) {
+    const subjectFilter = document.getElementById('ttSubjectFilter');
+    const currentSubject = subjectFilter.value;
+    const subjects = [...new Set(data.map(item => item.subject_name || '').filter(Boolean))].sort();
+    subjectFilter.innerHTML = '<option value="">All Work Areas</option>' + subjects.map(subject => `<option value="${subject}">${subject}</option>`).join('');
+    subjectFilter.value = subjects.includes(currentSubject) ? currentSubject : '';
+  }
+
+  function filterTimetable() {
+    const q = (document.getElementById('ttSearch').value || '').toLowerCase();
+    const day = document.getElementById('ttDayFilter').value;
+    const subject = document.getElementById('ttSubjectFilter').value;
+    const filtered = timetableData.filter(item => {
+      const haystack = [item.day_of_week, item.subject_name, item.code, item.room, item.teacher_name, item.start_time, item.end_time]
+        .join(' ').toLowerCase();
+      return haystack.includes(q)
+        && (!day || item.day_of_week === day)
+        && (!subject || item.subject_name === subject);
+    });
+    renderCalendar(filtered);
+  }
+
+  function renderCalendar(data) {
+    const monthStart = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
+    const monthEnd = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0);
+    const calendarStart = new Date(monthStart);
+    calendarStart.setDate(monthStart.getDate() - monthStart.getDay());
+    const calendarEnd = new Date(monthEnd);
+    calendarEnd.setDate(monthEnd.getDate() + (6 - monthEnd.getDay()));
+    const cells = [];
+    const walker = new Date(calendarStart);
+
+    while (walker <= calendarEnd) {
+      cells.push(new Date(walker));
+      walker.setDate(walker.getDate() + 1);
+    }
+
+    document.getElementById('calendarMonthTitle').textContent = monthStart.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
+
+    document.getElementById('timetableGrid').innerHTML = `
+      <div class="calendar-week-header">
+        ${CALENDAR_DAYS.map(day => `<div class="calendar-day-header">${day}</div>`).join('')}
+      </div>
+      <div class="calendar-month-grid">
+        ${cells.map(date => renderCalendarCell(date, data, monthStart.getMonth())).join('')}
+      </div>
+    `;
+  }
+
+  function renderCalendarCell(date, data, activeMonth) {
+    const dayName = CALENDAR_DAYS[date.getDay()];
+    const isOutsideMonth = date.getMonth() !== activeMonth;
+    const isToday = date.toDateString() === new Date().toDateString();
+    const daySchedules = SCHEDULE_DAYS.includes(dayName)
+      ? data
+          .filter(item => item.day_of_week === dayName)
+          .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')))
+      : [];
+
+    return `
+      <div class="calendar-day-cell ${isOutsideMonth ? 'muted' : ''} ${isToday ? 'today' : ''}">
+        <div class="calendar-date-row">
+          <span class="calendar-date-number">${date.getDate()}</span>
+          <span class="calendar-date-name">${dayName.slice(0, 3)}</span>
+        </div>
+        <div class="calendar-event-list">
+          ${daySchedules.length
+            ? daySchedules.map(item => renderCalendarEvent(item)).join('')
+            : '<div class="calendar-empty-slot">No schedule</div>'}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCalendarEvent(item) {
+    const shiftDetails = [item.specialization, item.section].filter(Boolean).join(' | ');
+    const staffLine = item.staff_names
+      ? `Staff: ${item.staff_names}`
+      : 'No staff assigned';
+    const supervisorLine = item.teacher_name ? `Supervisor: ${item.teacher_name}` : '';
+    return `
+      <div class="calendar-event">
+        <div class="calendar-event-time">${formatScheduleTime(item.start_time)} - ${formatScheduleTime(item.end_time)}</div>
+        <div class="calendar-event-title">${item.subject_name || '-'}</div>
+        <div class="calendar-event-meta">${[item.room, shiftDetails].filter(Boolean).join(' | ')}</div>
+        <div class="calendar-event-meta">${staffLine}</div>
+        ${supervisorLine ? `<div class="calendar-event-meta calendar-event-supervisor">${supervisorLine}</div>` : ''}
+        ${ROLE === 'admin' ? `<button type="button" class="calendar-event-remove" title="Remove schedule" onclick="deleteSchedule(${item.id})">x</button>` : ''}
+      </div>
+    `;
+  }
+
+  function formatScheduleTime(value) {
+    const [hourRaw, minuteRaw] = String(value || '').split(':');
+    const hour = Number(hourRaw);
+    const minute = Number(minuteRaw || 0);
+    if (!Number.isFinite(hour)) return value || '-';
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${String(minute).padStart(2, '0')} ${suffix}`;
+  }
+
+  function changeCalendarMonth(delta) {
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + delta, 1);
+    filterTimetable();
+  }
+
+  function goToCurrentMonth() {
+    calendarDate = new Date();
+    filterTimetable();
+  }
+
+  function openModal() {
+    document.getElementById('ttForm').reset();
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+  }
+
+  document.getElementById('ttForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const confirmed = await requestSaveConfirmation({
+      title: 'Save Schedule',
+      message: 'Do you want to save this schedule?'
+    });
+    if (!confirmed) return;
+
+    const payload = {
+      subject_id: document.getElementById('fSubject').value,
+      day_of_week: document.getElementById('fDay').value,
+      start_time: document.getElementById('fStart').value,
+      end_time: document.getElementById('fEnd').value,
+      room: document.getElementById('fRoom').value
+    };
+    const res = await API.post('/api/timetable', payload);
+    if (res.message) {
+      closeModal();
+      loadTimetable();
+      showToast(res.message, 'success');
+    } else {
+      showToast(res.error || 'Error', 'error');
+    }
+  });
+
+  async function deleteSchedule(id) {
+    const confirmed = await showConfirmModal({
+      title: 'Remove Schedule',
+      message: 'Do you want to remove this schedule?',
+      confirmText: 'Yes',
+      cancelText: 'No'
+    });
+    if (!confirmed) return;
+    const res = await API.delete('/api/timetable?id=' + id);
+    if (res.message) {
+      loadTimetable();
+      showToast(res.message, 'success');
+    }
+  }
+</script>
+</body>
+</html>

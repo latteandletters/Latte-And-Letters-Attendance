@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervisors - Latte & Letters</title>
+<link rel="stylesheet" href="css/style.css?v=latte-workforce">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-icon"></div><span class="logo-text">Latte & Letters</span></div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">-</div></div>
+      </div>
+      
+    </div>
+  </aside>
+  <main class="main-content">
+    <header class="top-bar">
+      <button type="button" class="btn-icon" onclick="toggleSidebar()">&#9776; Menu</button>
+      <h2 class="page-title" id="teachersPageTitle">Manage Supervisors</h2>
+      <div class="top-bar-right">
+        <input type="text" id="searchInput" placeholder="Search supervisors..." class="search-input" oninput="filterTable()">
+        <select id="departmentFilter" class="search-input" onchange="filterTable()"><option value="">All Branches</option></select>
+        <select id="subjectFilter" class="search-input" onchange="filterTable()"><option value="">All Assigned Areas</option></select>
+        <button type="button" class="btn btn-secondary" id="teachersArchiveToggleBtn" onclick="toggleArchiveView()">View Archived</button>
+        <button type="button" class="btn btn-primary hidden" id="addSupervisorsBtn" onclick="openModal()">+ Add Members</button>
+      </div>
+    </header>
+    <div class="content-area">
+      <div class="table-card">
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Branch / Department</th><th>Assigned Area</th><th>Position</th><th>Contact No.</th><th>Actions</th></tr></thead>
+          <tbody id="teachersBody"><tr><td colspan="7" class="loading-row">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal student-profile-modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Edit Supervisor</h3>
+      <button type="button" class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <form id="teacherForm">
+      <input type="hidden" id="teacherId">
+      <div class="form-row" id="accountUsernameRow">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="fUsername" autocomplete="off" placeholder="e.g. msantos" required>
+        </div>
+      </div>
+      <div class="form-row" id="accountPasswordRow">
+        <div class="form-group">
+          <label>Password</label>
+          <div class="pass-wrap">
+            <input type="password" id="fPassword" autocomplete="new-password" required>
+            <button type="button" class="toggle-pass" onclick="togglePass('fPassword', this)" aria-label="Show password">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <div class="pass-wrap">
+            <input type="password" id="fConfirmPassword" autocomplete="new-password" required>
+            <button type="button" class="toggle-pass" onclick="togglePass('fConfirmPassword', this)" aria-label="Show password">👁</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><input type="text" id="fFirstName" required></div>
+        <div class="form-group"><label>Middle Name (Optional)</label><input type="text" id="fMiddleName"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Last Name</label><input type="text" id="fLastName" required></div>
+        <div class="form-group"><label>Suffix</label><input type="text" id="fSuffix" placeholder="e.g. Jr., Sr., III"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="fEmail" required></div>
+        <div class="form-group"><label>Contact No.</label><input type="text" id="fPhone"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Date of Birth</label><input type="date" id="fBirthDate" required></div>
+        <div class="form-group"><label>Age</label><input type="text" id="fAge" placeholder="Auto computed" readonly></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Province</label><input type="text" id="fProvince" value="LAGUNA" readonly required></div>
+        <div class="form-group">
+          <label>Municipality / City</label>
+          <select id="fMunicipality" required><option value="">Select municipality or city</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Barangay</label>
+          <select id="fBarangay" required disabled><option value="">Select barangay</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Branch / Department</label>
+          <select id="fDept" required><option value="">Select branch / department</option></select>
+        </div>
+        <div class="form-group">
+          <label>Assigned Area</label>
+          <select id="fSubject" required disabled><option value="">Select branch first</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Position</label>
+          <select id="fSpecialization" disabled><option value="">Select assigned area first</option></select>
+        </div>
+      </div>
+      <div id="memberOtpPanel" class="profile-otp-panel hidden">
+        <p class="profile-otp-copy">A verification code has been sent to <strong id="memberOtpEmail"></strong>. Enter it to create this supervisor account.</p>
+        <div class="otp-inputs" id="memberOtpInputs">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric">
+        </div>
+        <div class="otp-timer profile-otp-timer">Expires in <span id="memberOtpCountdown">03:00</span></div>
+        <div id="memberOtpErr" class="error-msg profile-otp-error hidden"></div>
+        <div class="profile-otp-actions">
+          <button type="button" class="btn btn-secondary" id="memberResendOtpBtn" onclick="resendMemberOtp()">Resend Code</button>
+          <button type="button" class="btn btn-primary" id="memberVerifyOtpBtn" onclick="verifyMemberOtpAndCreate()">Verify & Create Account</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/laguna-addresses.js"></script>
+<script src="js/app.js"></script>
+<script>
+  requireRole('admin');
+  renderNav();
+  let showArchived = false;
+  let teachersData = [];
+  let pendingMemberPayload = null;
+  let memberOtpTimer = null;
+  const lagunaLocationData = window.LAGUNA_LOCATION_DATA || { province: 'LAGUNA', municipalities: [] };
+  const TEACHER_SUFFIXES = ['JR', 'SR', 'II', 'III', 'IV', 'V', 'VI'];
+  initializeTeacherLocationFields();
+  initializeAcademicSelectors({ collegeId: 'fDept', programId: 'fSubject', specializationId: 'fSpecialization' });
+  setTeacherBirthDateBounds();
+  updateTeachersViewState();
+  loadTeachers();
+
+  async function loadTeachers() {
+    const data = await API.get('/api/teachers' + (showArchived ? '?archived=1' : ''));
+    teachersData = data || [];
+    populateTeacherFilters(teachersData);
+    filterTable();
+  }
+
+  function renderTeachers(data) {
+    const tbody = document.getElementById('teachersBody');
+    if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="empty-row">${showArchived ? 'No archived supervisors found' : 'No supervisors found'}</td></tr>`; return; }
+    tbody.innerHTML = data.map(t => `
+      <tr>
+        <td>${t.full_name}</td><td>${t.email}</td><td>${t.department||'-'}</td>
+        <td>${t.subject||'-'}</td><td>${t.specialization||'-'}</td><td>${t.phone||'-'}</td>
+        <td class="actions">
+          ${showArchived
+            ? `<button type="button" class="btn btn-sm btn-success" onclick="restoreTeacher(${t.id})">Restore</button>
+               <button type="button" class="btn btn-sm btn-danger" onclick="permanentlyDeleteTeacher(${t.id})">Permanent Delete</button>`
+            : `<button type="button" class="btn btn-sm btn-secondary" onclick="editTeacher('${encodeURIComponent(JSON.stringify(t))}')">Edit</button>
+               <button type="button" class="btn btn-sm btn-danger" onclick="deleteTeacher(${t.id})">Archive</button>`}
+        </td>
+      </tr>`).join('');
+  }
+
+  function populateTeacherFilters(data) {
+    const departmentFilter = document.getElementById('departmentFilter');
+    const subjectFilter = document.getElementById('subjectFilter');
+    const currentDepartment = departmentFilter.value;
+    const currentSubject = subjectFilter.value;
+    const departments = [...new Set(data.map(t => t.department || '').filter(Boolean))].sort();
+    const subjects = [...new Set(data.map(t => t.subject || '').filter(Boolean))].sort();
+    departmentFilter.innerHTML = '<option value="">All Branches</option>' + departments.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+    subjectFilter.innerHTML = '<option value="">All Assigned Areas</option>' + subjects.map(subject => `<option value="${subject}">${subject}</option>`).join('');
+    departmentFilter.value = departments.includes(currentDepartment) ? currentDepartment : '';
+    subjectFilter.value = subjects.includes(currentSubject) ? currentSubject : '';
+  }
+
+  function splitTeacherFullName(fullName) {
+    const tokens = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return { firstName: '', middleName: '', lastName: '', suffix: '' };
+
+    let suffix = '';
+    const possibleSuffix = tokens[tokens.length - 1].replace(/\./g, '').toUpperCase();
+    if (TEACHER_SUFFIXES.includes(possibleSuffix)) suffix = tokens.pop();
+
+    const lastName = tokens.length ? tokens.pop() : '';
+    const firstName = tokens.length ? tokens.shift() : '';
+    const middleName = tokens.join(' ');
+    return { firstName, middleName, lastName, suffix };
+  }
+
+  function buildTeacherFullName() {
+    const firstName = toNameCase(document.getElementById('fFirstName').value);
+    const middleName = toNameCase(document.getElementById('fMiddleName').value);
+    const lastName = toNameCase(document.getElementById('fLastName').value);
+    const suffix = String(document.getElementById('fSuffix').value || '').trim();
+    return [firstName, middleName, lastName, suffix].filter(Boolean).join(' ').trim();
+  }
+
+  function getLagunaMunicipalities() {
+    return Array.isArray(lagunaLocationData.municipalities) ? lagunaLocationData.municipalities : [];
+  }
+
+  function repairLocationEncoding(value) {
+    const text = String(value || '').trim();
+    if (!text || !/[ÃƒÆ’Ãƒâ€šÃƒÂ¢]/.test(text)) return text;
+    try {
+      const percentEncoded = Array.from(text)
+        .map(ch => '%' + ch.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('');
+      return decodeURIComponent(percentEncoded);
+    } catch (error) {
+      return text
+        .replace(/ÃƒÆ’Ã‚Â±/g, 'Ã±')
+        .replace(/ÃƒÆ’Ã¢â‚¬Ëœ|ÃƒÆ’Ã‚â€˜/g, 'Ã‘')
+        .replace(/ÃƒÆ’Ã‚Â¡/g, 'Ã¡')
+        .replace(/ÃƒÆ’Ã‚Â©/g, 'Ã©')
+        .replace(/ÃƒÆ’Ã‚Â­/g, 'Ã­')
+        .replace(/ÃƒÆ’Ã‚Â³/g, 'Ã³')
+        .replace(/ÃƒÆ’Ã‚Âº/g, 'Ãº');
+    }
+  }
+
+  function formatLocationLabel(value) {
+    let label = repairLocationEncoding(value);
+    if (!label) return '';
+    label = label.replace(/\s+\(Capital\)$/i, '');
+    if (/^CITY OF /i.test(label)) label = label.replace(/^CITY OF /i, '') + ' CITY';
+    return label
+      .toLowerCase()
+      .replace(/\b([a-z\u00c0-\u00ff])/g, match => match.toUpperCase())
+      .replace(/\bOf\b/g, 'of')
+      .replace(/\bAnd\b/g, 'and');
+  }
+
+  function formatBarangayLabel(value) {
+    return repairLocationEncoding(value).replace(/\s+/g, ' ').trim();
+  }
+
+  function populateTeacherProvince() {
+    document.getElementById('fProvince').value = lagunaLocationData.province || 'LAGUNA';
+  }
+
+  function populateTeacherMunicipalities(selectedCode = '', selectedName = '') {
+    const municipality = document.getElementById('fMunicipality');
+    municipality.innerHTML = '<option value="">Select municipality or city</option>';
+    const selectedLabel = formatLocationLabel(selectedName);
+    let matchedCode = '';
+
+    getLagunaMunicipalities().forEach(item => {
+      const label = formatLocationLabel(item.name);
+      const option = document.createElement('option');
+      option.value = item.code;
+      option.textContent = label;
+      municipality.appendChild(option);
+      if (!matchedCode && selectedLabel && label === selectedLabel) matchedCode = item.code;
+    });
+
+    municipality.value = selectedCode || matchedCode || '';
+  }
+
+  function getSelectedTeacherMunicipalityData() {
+    const code = document.getElementById('fMunicipality').value;
+    return getLagunaMunicipalities().find(item => item.code === code) || null;
+  }
+
+  function getSelectedTeacherMunicipalityLabel() {
+    const item = getSelectedTeacherMunicipalityData();
+    return item ? formatLocationLabel(item.name) : '';
+  }
+
+  function populateTeacherBarangays(municipalityCode = '', selectedBarangay = '') {
+    const barangay = document.getElementById('fBarangay');
+    const municipality = getLagunaMunicipalities().find(item => item.code === municipalityCode);
+    barangay.innerHTML = '';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = municipality ? 'Select barangay' : 'Select municipality or city first';
+    barangay.appendChild(placeholder);
+
+    if (!municipality || !Array.isArray(municipality.barangays)) {
+      barangay.disabled = true;
+      return;
+    }
+
+    municipality.barangays.forEach(name => {
+      const label = formatBarangayLabel(name);
+      const option = document.createElement('option');
+      option.value = label;
+      option.textContent = label;
+      barangay.appendChild(option);
+    });
+
+    barangay.disabled = false;
+    barangay.value = selectedBarangay || '';
+  }
+
+  function initializeTeacherLocationFields() {
+    populateTeacherProvince();
+    populateTeacherMunicipalities();
+    populateTeacherBarangays('');
+    document.getElementById('fMunicipality').addEventListener('change', event => {
+      populateTeacherBarangays(event.target.value);
+    });
+  }
+
+  function setTeacherBirthDateBounds() {
+    const field = document.getElementById('fBirthDate');
+    const today = new Date();
+    const max = new Date(today.getFullYear() - 15, today.getMonth(), today.getDate());
+    const min = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
+    const toLocalDate = date => [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-');
+    field.max = toLocalDate(max);
+    field.min = toLocalDate(min);
+  }
+
+  function getTeacherAgeFromBirthDate(value) {
+    if (!value) return null;
+    const birthDate = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(birthDate.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+    return age;
+  }
+
+  function updateTeacherAgeField() {
+    const ageInput = document.getElementById('fAge');
+    const birthDateInput = document.getElementById('fBirthDate');
+    if (!ageInput || !birthDateInput) return;
+    const age = getTeacherAgeFromBirthDate(birthDateInput.value);
+    ageInput.value = Number.isInteger(age) && age >= 0 ? String(age) : '';
+  }
+
+  function getTeacherBirthDateError(value) {
+    if (!value) return 'Date of birth is required';
+    const age = getTeacherAgeFromBirthDate(value);
+    if (age === null) return 'Enter a valid date of birth';
+    if (age < 15 || age > 80) return 'Age must be between 15 and 80 years old';
+    return null;
+  }
+
+  function togglePass(id, btn) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  }
+
+  function bindMemberOtpInputs() {
+    document.querySelectorAll('#memberOtpInputs .otp-box').forEach((box, index, boxes) => {
+      box.addEventListener('input', () => {
+        box.value = box.value.replace(/\D/g, '').slice(0, 1);
+        if (box.value && index < boxes.length - 1) boxes[index + 1].focus();
+      });
+      box.addEventListener('keydown', event => {
+        if (event.key === 'Backspace' && !box.value && index > 0) boxes[index - 1].focus();
+      });
+    });
+  }
+
+  function getMemberOtpValue() {
+    return [...document.querySelectorAll('#memberOtpInputs .otp-box')].map(box => box.value).join('');
+  }
+
+  function resetMemberOtpPanel() {
+    clearInterval(memberOtpTimer);
+    document.getElementById('memberOtpPanel').classList.add('hidden');
+    document.getElementById('memberOtpErr').classList.add('hidden');
+    document.querySelectorAll('#memberOtpInputs .otp-box').forEach(box => {
+      box.value = '';
+      box.classList.remove('otp-error');
+    });
+    document.getElementById('memberOtpCountdown').textContent = '03:00';
+    document.getElementById('memberResendOtpBtn').disabled = false;
+    document.getElementById('memberVerifyOtpBtn').disabled = false;
+  }
+
+  function startMemberOtpTimer() {
+    clearInterval(memberOtpTimer);
+    let seconds = 180;
+    const countdown = document.getElementById('memberOtpCountdown');
+    const resend = document.getElementById('memberResendOtpBtn');
+    resend.disabled = true;
+    countdown.textContent = '03:00';
+    memberOtpTimer = setInterval(() => {
+      seconds--;
+      countdown.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+      if (seconds <= 0) {
+        clearInterval(memberOtpTimer);
+        countdown.textContent = 'Expired';
+        resend.disabled = false;
+      }
+    }, 1000);
+  }
+
+  function showMemberOtpError(message) {
+    const error = document.getElementById('memberOtpErr');
+    error.textContent = message;
+    error.classList.remove('hidden');
+  }
+
+  async function sendMemberOtp(payload) {
+    pendingMemberPayload = payload;
+    const saveBtn = document.querySelector('#teacherForm button[type="submit"]');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Sending Code...';
+    const res = await API.post('/api/send-otp', { email: payload.email, purpose: 'register' });
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Send Verification Code';
+    if (res.message) {
+      document.getElementById('memberOtpEmail').textContent = payload.email;
+      document.getElementById('memberOtpPanel').classList.remove('hidden');
+      document.getElementById('memberOtpErr').classList.add('hidden');
+      document.querySelectorAll('#memberOtpInputs .otp-box').forEach(box => box.value = '');
+      startMemberOtpTimer();
+      document.querySelector('#memberOtpInputs .otp-box')?.focus();
+    } else {
+      showToast(res.error || 'Failed to send verification code', 'error');
+    }
+  }
+
+  async function resendMemberOtp() {
+    if (!pendingMemberPayload) return;
+    document.getElementById('memberOtpErr').classList.add('hidden');
+    const res = await API.post('/api/send-otp', { email: pendingMemberPayload.email, purpose: 'register' });
+    if (res.message) {
+      showToast('Code resent', 'success');
+      startMemberOtpTimer();
+    } else {
+      showMemberOtpError(res.error || 'Failed to resend code');
+    }
+  }
+
+  async function verifyMemberOtpAndCreate() {
+    if (!pendingMemberPayload) return;
+    document.getElementById('memberOtpErr').classList.add('hidden');
+    const otp = getMemberOtpValue();
+    if (otp.length < 6) { showMemberOtpError('Enter the 6-digit code'); return; }
+    const btn = document.getElementById('memberVerifyOtpBtn');
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+    const verRes = await API.post('/api/verify-otp', { email: pendingMemberPayload.email, otp, purpose: 'register' });
+    if (!verRes.verified) {
+      document.querySelectorAll('#memberOtpInputs .otp-box').forEach(box => box.classList.add('otp-error'));
+      setTimeout(() => document.querySelectorAll('#memberOtpInputs .otp-box').forEach(box => box.classList.remove('otp-error')), 500);
+      showMemberOtpError(verRes.error || 'Invalid or expired code');
+      btn.disabled = false;
+      btn.textContent = 'Verify & Create Account';
+      return;
+    }
+    btn.textContent = 'Creating...';
+    const res = await API.post('/api/teachers', pendingMemberPayload);
+    btn.disabled = false;
+    btn.textContent = 'Verify & Create Account';
+    if (res.message) {
+      clearInterval(memberOtpTimer);
+      pendingMemberPayload = null;
+      resetMemberOtpPanel();
+      closeModal();
+      loadTeachers();
+      showToast(res.message, 'success');
+    } else {
+      showMemberOtpError(res.error || 'Account creation failed');
+    }
+  }
+
+  function updateTeachersViewState() {
+    document.getElementById('teachersPageTitle').textContent = showArchived ? 'Archived Supervisors' : 'Manage Supervisors';
+    document.getElementById('teachersArchiveToggleBtn').textContent = showArchived ? 'Back to Active' : 'View Archived';
+    document.getElementById('addSupervisorsBtn')?.classList.toggle('hidden', showArchived);
+  }
+
+  function toggleArchiveView() {
+    showArchived = !showArchived;
+    updateTeachersViewState();
+    loadTeachers();
+  }
+
+  function openModal(data=null) {
+    document.getElementById('teacherForm').reset();
+    pendingMemberPayload = null;
+    resetMemberOtpPanel();
+    document.getElementById('modalTitle').textContent = data ? 'Edit Supervisor' : 'Add Members';
+    document.querySelector('#teacherForm button[type="submit"]').textContent = data ? 'Save' : 'Send Verification Code';
+    const fallbackNameParts = splitTeacherFullName(data ? data.full_name : '');
+    const nameParts = data
+      ? {
+          firstName: data.first_name || fallbackNameParts.firstName,
+          middleName: data.middle_name || fallbackNameParts.middleName,
+          lastName: data.last_name || fallbackNameParts.lastName,
+          suffix: data.suffix || fallbackNameParts.suffix
+        }
+      : { firstName: '', middleName: '', lastName: '', suffix: '' };
+    document.getElementById('teacherId').value  = data ? data.id : '';
+    document.getElementById('fUsername').value = '';
+    document.getElementById('fPassword').value = '';
+    document.getElementById('fConfirmPassword').value = '';
+    document.getElementById('accountUsernameRow').classList.toggle('hidden', !!data);
+    document.getElementById('accountPasswordRow').classList.toggle('hidden', !!data);
+    document.getElementById('fUsername').required = !data;
+    document.getElementById('fUsername').disabled = !!data;
+    document.getElementById('fPassword').required = !data;
+    document.getElementById('fConfirmPassword').required = !data;
+    document.getElementById('fFirstName').value = nameParts.firstName;
+    document.getElementById('fMiddleName').value = nameParts.middleName;
+    document.getElementById('fLastName').value = nameParts.lastName;
+    document.getElementById('fSuffix').value = nameParts.suffix;
+    document.getElementById('fEmail').value     = data ? data.email : '';
+    document.getElementById('fPhone').value     = data ? data.phone||'' : '';
+    document.getElementById('fBirthDate').value = data ? data.date_of_birth || '' : '';
+    updateTeacherAgeField();
+    populateTeacherProvince();
+    populateTeacherMunicipalities('', data ? data.municipality || '' : '');
+    populateTeacherBarangays(document.getElementById('fMunicipality').value, data ? data.barangay || '' : '');
+    document.getElementById('fProvince').value = data ? (data.province || 'LAGUNA').toUpperCase() : 'LAGUNA';
+    populateAcademicCollegeSelect(document.getElementById('fDept'), data ? data.department || '' : '');
+    populateAcademicProgramSelect(document.getElementById('fSubject'), document.getElementById('fDept').value, data ? data.subject || '' : '');
+    populateAcademicSpecializationSelect(document.getElementById('fSpecialization'), document.getElementById('fDept').value, document.getElementById('fSubject').value, data ? data.specialization || '' : '');
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+  function editTeacher(encoded) { openModal(JSON.parse(decodeURIComponent(encoded))); }
+  function closeModal() {
+    pendingMemberPayload = null;
+    resetMemberOtpPanel();
+    document.getElementById('modalOverlay').classList.add('hidden');
+  }
+  bindAutoNameCase(['fFirstName', 'fMiddleName', 'fLastName']);
+  document.getElementById('fBirthDate')?.addEventListener('input', updateTeacherAgeField);
+  document.getElementById('fBirthDate')?.addEventListener('change', updateTeacherAgeField);
+  bindMemberOtpInputs();
+
+  document.getElementById('teacherForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('teacherId').value;
+    const email = normalizeEmailValue(document.getElementById('fEmail').value);
+    const emailError = getEmailError(email);
+    if (emailError) { showToast(emailError, 'error'); return; }
+    if (!document.getElementById('fFirstName').value.trim() || !document.getElementById('fLastName').value.trim()) {
+      showToast('First name and last name are required', 'error');
+      return;
+    }
+    const birthDate = document.getElementById('fBirthDate').value;
+    const birthDateError = getTeacherBirthDateError(birthDate);
+    if (birthDateError) { showToast(birthDateError, 'error'); return; }
+    const municipality = getSelectedTeacherMunicipalityLabel();
+    const barangay = document.getElementById('fBarangay').value;
+    if (!municipality) { showToast('Please select a municipality or city', 'error'); return; }
+    if (!barangay) { showToast('Please select a barangay', 'error'); return; }
+    const specializationInput = document.getElementById('fSpecialization');
+    if (!specializationInput.disabled && !specializationInput.value) {
+      showToast('Please select a position', 'error');
+      return;
+    }
+    if (!document.getElementById('fDept').value) { showToast('Please select a branch / department', 'error'); return; }
+    if (!document.getElementById('fSubject').value) { showToast('Please select an assigned area', 'error'); return; }
+    if (!id) {
+      const username = document.getElementById('fUsername').value.trim();
+      const password = document.getElementById('fPassword').value;
+      const confirmPassword = document.getElementById('fConfirmPassword').value;
+      if (!username) { showToast('Username is required', 'error'); return; }
+      if (username.length < 3 || username.length > 30 || !/^[A-Za-z0-9_]+$/.test(username)) {
+        showToast('Username must be 3-30 characters using letters, numbers, or underscores only', 'error');
+        return;
+      }
+      if (!password || password.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+      if (password !== confirmPassword) { showToast('Passwords do not match', 'error'); return; }
+    }
+    const payload = {
+      id,
+      username: document.getElementById('fUsername').value.trim(),
+      password: document.getElementById('fPassword').value,
+      first_name: toNameCase(document.getElementById('fFirstName').value),
+      middle_name: toNameCase(document.getElementById('fMiddleName').value),
+      last_name: toNameCase(document.getElementById('fLastName').value),
+      suffix: String(document.getElementById('fSuffix').value || '').trim(),
+      full_name: buildTeacherFullName(),
+      email: email, phone: document.getElementById('fPhone').value,
+      date_of_birth: birthDate,
+      province: document.getElementById('fProvince').value,
+      municipality,
+      barangay,
+      department: document.getElementById('fDept').value,
+      subject: document.getElementById('fSubject').value,
+      specialization: specializationInput.disabled ? '' : specializationInput.value
+    };
+    const confirmed = await requestSaveConfirmation({
+      title: id ? 'Update Supervisor' : 'Manager Confirmation',
+      message: id
+        ? 'Do you want to update this supervisor?'
+        : `Please confirm adding this supervisor:\n\nName: ${payload.full_name || '-'}\nUsername: ${payload.username || '-'}\nBranch / Department: ${payload.department || '-'}\nAssigned Area: ${payload.subject || '-'}\nPosition: ${payload.specialization || '-'}\nDate of Birth: ${payload.date_of_birth || '-'}\nAge: ${document.getElementById('fAge').value || '-'}\nAddress: ${payload.barangay || '-'}, ${payload.municipality || '-'}, ${payload.province || '-'}\nEmail: ${payload.email || '-'}\nContact No.: ${payload.phone || '-'}`,
+      confirmText: 'Yes'
+    });
+    if (!confirmed) return;
+    if (!id) {
+      await sendMemberOtp(payload);
+      return;
+    }
+    const res = id ? await API.put('/api/teachers', payload) : await API.post('/api/teachers', payload);
+    if (res.message) { closeModal(); loadTeachers(); showToast(res.message, 'success'); }
+    else showToast(res.error || 'Error', 'error');
+  });
+
+  async function deleteTeacher(id) {
+    const confirmed = await showConfirmModal({
+      title: 'Archive Supervisor',
+      message: 'This will move the supervisor to Archived. You can restore it later. Continue?',
+      confirmText: 'Archive',
+      cancelText: 'No'
+    });
+    if (!confirmed) return;
+    const res = await API.delete('/api/teachers?id=' + id);
+    if (res.message) { loadTeachers(); showToast('Supervisor archived', 'success'); }
+  }
+
+  async function restoreTeacher(id) {
+    const confirmed = await showConfirmModal({
+      title: 'Restore Supervisor',
+      message: 'Do you want to restore this supervisor?',
+      confirmText: 'Restore',
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
+    const res = await API.put('/api/teachers', { id, action: 'restore' });
+    if (res.message) { loadTeachers(); showToast(res.message, 'success'); }
+    else showToast(res.error || 'Restore failed', 'error');
+  }
+
+  async function permanentlyDeleteTeacher(id) {
+    const confirmed = await showConfirmModal({
+      title: 'Permanent Delete Supervisor',
+      message: 'This will permanently delete the archived supervisor account. Active work areas must be reassigned first. Archived work areas will be detached automatically. Continue?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
+    const res = await API.delete('/api/teachers?id=' + id + '&permanent=1');
+    if (res.message) { loadTeachers(); showToast(res.message, 'success'); }
+    else showToast(res.error || 'Permanent delete failed', 'error');
+  }
+
+  function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const department = document.getElementById('departmentFilter').value;
+    const subject = document.getElementById('subjectFilter').value;
+    const filtered = teachersData.filter(t => {
+      const matchesSearch = [t.full_name, t.email, t.department, t.subject, t.specialization, t.phone]
+        .join(' ').toLowerCase().includes(q);
+      const matchesDepartment = !department || t.department === department;
+      const matchesSubject = !subject || t.subject === subject;
+      return matchesSearch && matchesDepartment && matchesSubject;
+    });
+    renderTeachers(filtered);
+  }
+</script>
+</body>
+</html>

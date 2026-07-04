@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Attendance - Latte & Letters</title>
+<link rel="stylesheet" href="css/style.css?v=qr-workarea">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="logo-icon"></div><span class="logo-text">Latte & Letters</span></div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">-</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-bar">
+      <button type="button" class="btn-icon" onclick="toggleSidebar()">&#9776; Menu</button>
+      <h2 class="page-title" id="attendancePageTitle">Staff Attendance</h2>
+    </header>
+
+    <div class="content-area">
+      <div class="tabs">
+        <button type="button" class="tab active" id="tab-btn-manual" onclick="switchTab('manual', this)">Manual</button>
+        <button type="button" class="tab" id="tab-btn-qr" onclick="switchTab('qr', this)">QR Scan</button>
+        <button type="button" class="tab" id="tab-btn-geo" onclick="switchTab('geo', this)">Location Check-in</button>
+        <button type="button" class="tab" id="tab-btn-records" onclick="switchTab('records', this)">Records</button>
+        <button type="button" class="tab hidden" id="tab-btn-myqr" onclick="switchTab('myqr', this)">My Staff QR</button>
+      </div>
+
+      <div id="tab-manual" class="tab-content active">
+        <div class="filter-bar">
+          <div class="form-group inline"><label>Date</label><input type="date" id="attDate"></div>
+          <div class="form-group inline">
+            <label>Work Area</label>
+            <select id="attSubject"><option value="">Select work area</option></select>
+          </div>
+          <div class="form-group inline"><label>Search</label><input type="text" id="manualSearch" class="search-input" placeholder="Search staff..." oninput="filterManualRows()"></div>
+          <div class="form-group inline">
+            <label>Status</label>
+            <select id="manualStatusFilter" class="search-input" onchange="filterManualRows()">
+              <option value="">All Statuses</option>
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="late">Late</option>
+              <option value="excused">Excused</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="loadManualList()">Load Staff</button>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead><tr><th>Staff ID</th><th>Name</th><th>Status</th><th>Time In</th><th>Remarks</th><th>Save</th></tr></thead>
+            <tbody id="manualBody"><tr><td colspan="6" class="empty-row">Select a date and work area to load staff.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="action-bar">
+          <button type="button" class="btn btn-success" onclick="markAll('present')">Mark All Present</button>
+          <button type="button" class="btn btn-danger" onclick="markAll('absent')">Mark All Absent</button>
+          <button type="button" class="btn btn-primary" onclick="saveAllAttendance()">Save All</button>
+        </div>
+      </div>
+
+      <div id="tab-qr" class="tab-content hidden">
+        <div class="filter-bar">
+          <div class="form-group inline"><label>Date</label><input type="date" id="qrDate"></div>
+          <div class="form-group inline">
+            <label>Work Area</label>
+            <select id="qrSubject"><option value="">Select work area</option></select>
+          </div>
+        </div>
+        <div class="qr-scanner-area">
+          <div class="qr-box">
+            <div class="qr-frame" id="qrFrame">
+              <video id="qrVideo" autoplay playsinline></video>
+              <div class="qr-overlay"></div>
+            </div>
+            <div class="qr-controls">
+              <button type="button" class="btn btn-primary" onclick="startQRScan()">Start Camera</button>
+              <button type="button" class="btn btn-secondary" onclick="stopQRScan()">Stop</button>
+            </div>
+            <p class="qr-hint">Point the camera at the staff QR code. Every successful scan is saved immediately with the current date and time.</p>
+          </div>
+          <div class="qr-log">
+            <h4>Scan Log</h4>
+            <div class="filter-bar qr-log-filter">
+              <div class="form-group inline"><label>Search</label><input type="text" id="qrLogSearch" class="search-input" placeholder="Search scans..." oninput="filterQrLog()"></div>
+              <div class="form-group inline">
+                <label>Status</label>
+                <select id="qrLogStatusFilter" class="search-input" onchange="filterQrLog()">
+                  <option value="">All Statuses</option>
+                  <option value="success">Saved</option>
+                  <option value="error">Error</option>
+                </select>
+              </div>
+            </div>
+            <div id="qrLog"><p class="empty-msg">No scans yet</p></div>
+          </div>
+        </div>
+        <div class="qr-manual-input">
+          <h4>Manual QR Input</h4>
+          <div class="form-row">
+            <input type="text" id="qrManualInput" placeholder="Paste QR data here...">
+            <button type="button" class="btn btn-primary" onclick="processQRManual()">Process</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-geo" class="tab-content hidden">
+        <div class="geo-area">
+          <div class="geo-setup">
+            <div class="geo-top-grid">
+              <div class="geo-top-main">
+                <h4>Allowed Location</h4>
+                <div class="form-row geo-meta-row">
+                  <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="geoDate">
+                  </div>
+                  <div class="form-group">
+                    <label>Work Area</label>
+                    <select id="geoSubject"><option value="">Select work area</option></select>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-secondary geo-locate-btn" onclick="useMyLocation()">Show My Current Location</button>
+              </div>
+              <div class="geo-campus-card">
+                <div class="geo-campus-head">
+                  <span class="geo-campus-title">Branch Boundary</span>
+                  <span class="geo-campus-badge">Cafe-library zone</span>
+                </div>
+                <p class="geo-campus-copy">Latte & Letters Main Branch, Brgy. Bubukal, Sta. Cruz, Laguna</p>
+                <div class="geo-campus-meta">
+                  <span>Center: 14.255459, 121.408696</span>
+                  <span>Radius: 300 meters</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="geo-map-panel">
+            <div class="geo-map-shell">
+              <div class="geo-map-head">
+                <span class="geo-map-title">Live Staff Attendance Map</span>
+                <span id="geoMapMeta" class="geo-map-meta">Waiting for location data...</span>
+              </div>
+              <div id="geoMap" class="attendance-map"></div>
+            </div>
+          </div>
+          <div class="geo-checkin">
+            <h4>Geo Check-in</h4>
+            <p id="geoRoleNote" class="geo-note hidden"></p>
+            <div id="geoLiveMeta" class="geo-live-meta"></div>
+            <button type="button" class="btn btn-primary btn-lg" onclick="geoCheckIn()">Check In with Location</button>
+            <div id="geoStatus" class="geo-status"></div>
+            <div id="geoTrackingFeed" class="geo-tracking-feed hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-records" class="tab-content hidden">
+        <div class="filter-bar records-filter-bar">
+          <div class="form-group inline">
+            <label>Status</label>
+            <select id="recordsStatusFilter" class="search-input" onchange="filterRecords()">
+              <option value="">All Statuses</option>
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="late">Late</option>
+              <option value="excused">Excused</option>
+            </select>
+          </div>
+          <div class="form-group inline">
+            <label>Method</label>
+            <select id="recordsMethodFilter" class="search-input" onchange="filterRecords()">
+              <option value="">All Methods</option>
+              <option value="manual">Manual</option>
+              <option value="qr">QR</option>
+              <option value="geo">Geo</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Staff</th><th>Work Area</th><th>Status</th><th>Method</th><th>Location</th><th>Time In</th><th id="actionsHeader">Actions</th></tr></thead>
+            <tbody id="recordsBody"><tr><td colspan="8" class="loading-row">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-myqr" class="tab-content hidden">
+        <div class="my-qr-layout">
+          <div class="my-qr-stack">
+            <div class="my-qr-card">
+              <h3 class="my-qr-title">Your Staff Attendance QR Code</h3>
+              <p class="my-qr-copy">Show this to your supervisor to mark your attendance.</p>
+              <div id="myQRBadge" class="my-qr-badge">Static QR</div>
+              <div id="myQRContainer" class="my-qr-container"></div>
+              <div id="myQRName" class="my-qr-name"></div>
+              <div id="myQRId" class="my-qr-id"></div>
+              <div id="myQRValidity" class="my-qr-validity"></div>
+              <div id="myQRHint" class="my-qr-hint">This QR does not expire or refresh automatically.</div>
+              <button type="button" class="btn btn-primary" onclick="downloadQR()">Download QR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/app.js?v=toast-single"></script>
+<script src="js/qr.js?v=workarea-log"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+  requireAuth();
+  renderNav();
+
+  const ROLE = localStorage.getItem('role');
+  const PROFILE_ID = currentProfileId();
+  let manualStudents = [];
+  let attendanceRecords = [];
+  let geoMap = null;
+  let geoAllowedMarker = null;
+  let geoCurrentMarker = null;
+  let geoFenceCircle = null;
+  let geoCurrentPosition = null;
+  let geoWatchId = null;
+  let geoTrackedLayer = null;
+  let geoStatusTimer = null;
+  let geoCurrentAddress = '';
+  let geoAddressLookupTimer = null;
+  const geoAddressCache = new Map();
+  const LU_CAMPUS = Object.freeze({
+    name: 'Latte & Letters Main Branch',
+    address: 'Cafe-library staff attendance zone, Brgy. Bubukal, Sta. Cruz, Laguna',
+    lat: 14.2554586,
+    lng: 121.408696216589,
+    radius: 300
+  });
+
+  function formatLocalDate(date = new Date()) {
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return localDate.toISOString().split('T')[0];
+  }
+
+  function formatLocalTime(date = new Date()) {
+    return date.toTimeString().split(' ')[0];
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  document.getElementById('attDate').value = formatLocalDate();
+  document.getElementById('qrDate').value = formatLocalDate();
+  document.getElementById('geoDate').value = formatLocalDate();
+
+  function escapeAttendanceHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getLeafletReady() {
+    return typeof window.L !== 'undefined';
+  }
+
+  function getGeoAllowedState() {
+    return {
+      lat: LU_CAMPUS.lat,
+      lng: LU_CAMPUS.lng,
+      radius: LU_CAMPUS.radius
+    };
+  }
+
+  function hasValidCoordinates(latitude, longitude) {
+    const latText = String(latitude ?? '').trim();
+    const lngText = String(longitude ?? '').trim();
+    if (!latText || !lngText) return false;
+    return Number.isFinite(Number(latText)) && Number.isFinite(Number(lngText));
+  }
+
+  function geoCoordinateKey(latitude, longitude) {
+    return `${Number(latitude).toFixed(5)},${Number(longitude).toFixed(5)}`;
+  }
+
+  function geoCoordsLine(position) {
+    if (!position || !Number.isFinite(position.lat) || !Number.isFinite(position.lng)) return '';
+    return `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+  }
+
+  function geoRecordAddress(item) {
+    return String(item?.location_address || '').trim();
+  }
+
+  function renderGeoLivePosition(pending = false) {
+    if (!geoCurrentPosition) {
+      setGeoLiveMeta('');
+      return;
+    }
+    const coordsLine = geoCoordsLine(geoCurrentPosition);
+    const address = String(geoCurrentAddress || '').trim();
+    const mainText = address || (pending ? 'Finding nearby address...' : coordsLine);
+    setGeoLiveMeta(`
+      <div class="geo-live-meta-card">
+        <span>${address ? 'Detected Address' : 'Live Position'}</span>
+        <strong>${escapeAttendanceHtml(mainText)}</strong>
+        ${address ? `<small>${escapeAttendanceHtml(coordsLine)}</small>` : ''}
+      </div>
+    `);
+  }
+
+  async function reverseGeocodeAddress(latitude, longitude) {
+    if (!hasValidCoordinates(latitude, longitude)) return '';
+    const key = geoCoordinateKey(latitude, longitude);
+    if (geoAddressCache.has(key)) return geoAddressCache.get(key);
+
+    const params = new URLSearchParams();
+    params.set('format', 'jsonv2');
+    params.set('lat', String(latitude));
+    params.set('lon', String(longitude));
+    params.set('zoom', '18');
+    params.set('addressdetails', '1');
+    params.set('accept-language', 'en');
+
+    try {
+      const response = await fetch('https://nominatim.openstreetmap.org/reverse?' + params.toString(), {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return '';
+      const payload = await response.json();
+      const address = String(payload.display_name || '').trim();
+      if (address) geoAddressCache.set(key, address);
+      return address;
+    } catch (error) {
+      return '';
+    }
+  }
+
+  async function resolveGeoCurrentAddress(position = geoCurrentPosition, options = {}) {
+    if (!position) return '';
+    const key = geoCoordinateKey(position.lat, position.lng);
+    if (!options.force && geoAddressCache.has(key)) {
+      geoCurrentAddress = geoAddressCache.get(key);
+      renderGeoLivePosition(false);
+      return geoCurrentAddress;
+    }
+
+    const address = await reverseGeocodeAddress(position.lat, position.lng);
+    if (address && geoCurrentPosition && geoCoordinateKey(geoCurrentPosition.lat, geoCurrentPosition.lng) === key) {
+      geoCurrentAddress = address;
+      renderGeoLivePosition(false);
+      renderGeoMap();
+    }
+    return address;
+  }
+
+  function updateGeoCurrentPosition(latitude, longitude, options = {}) {
+    geoCurrentPosition = {
+      lat: Number(latitude),
+      lng: Number(longitude)
+    };
+    const key = geoCoordinateKey(geoCurrentPosition.lat, geoCurrentPosition.lng);
+    geoCurrentAddress = geoAddressCache.get(key) || '';
+    renderGeoLivePosition(options.lookupAddress !== false && !geoCurrentAddress);
+    renderGeoMap();
+
+    if (options.lookupAddress === false) return;
+    if (geoAddressLookupTimer) clearTimeout(geoAddressLookupTimer);
+    geoAddressLookupTimer = setTimeout(() => {
+      resolveGeoCurrentAddress(geoCurrentPosition, { force: !!options.forceAddressLookup });
+    }, options.lookupDelayMs ?? 700);
+  }
+
+  async function hydrateGeoRecordAddresses(records = []) {
+    for (const item of records) {
+      if (geoRecordAddress(item) || !hasValidCoordinates(item.latitude, item.longitude)) continue;
+      const address = await reverseGeocodeAddress(item.latitude, item.longitude);
+      if (address) item.location_address = address;
+    }
+    return records;
+  }
+
+  function setGeoMapMeta(message) {
+    const host = document.getElementById('geoMapMeta');
+    if (host) host.textContent = message || 'Waiting for location data...';
+  }
+
+  function setGeoLiveMeta(html) {
+    const host = document.getElementById('geoLiveMeta');
+    if (!host) return;
+    host.innerHTML = html || '';
+    host.classList.toggle('hidden', !html);
+  }
+
+  function ensureGeoMap() {
+    if (!getLeafletReady() || geoMap) return geoMap;
+    const host = document.getElementById('geoMap');
+    if (!host) return null;
+
+    geoMap = L.map(host, {
+      zoomControl: true,
+      attributionControl: true
+    }).setView([LU_CAMPUS.lat, LU_CAMPUS.lng], 16);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(geoMap);
+
+    geoTrackedLayer = L.layerGroup().addTo(geoMap);
+    return geoMap;
+  }
+
+  function renderGeoTrackingFeed(records = []) {
+    const host = document.getElementById('geoTrackingFeed');
+    if (!host) return;
+
+    if (ROLE !== 'supervisor') {
+      host.classList.add('hidden');
+      host.innerHTML = '';
+      return;
+    }
+
+    if (!records.length) {
+      host.classList.remove('hidden');
+      host.innerHTML = '<div class="geo-tracking-empty">No location-based attendance markers for the selected work area and date yet.</div>';
+      return;
+    }
+
+    host.classList.remove('hidden');
+    host.innerHTML = `
+      <div class="geo-tracking-head">Recent Attendance Markers</div>
+      ${records.slice(0, 6).map(item => `
+        <div class="geo-tracking-item">
+          <div>
+            <strong>${escapeAttendanceHtml(item.full_name || 'Staff')}</strong>
+            <span>${escapeAttendanceHtml(item.subject_name || 'Work Area')} - ${escapeAttendanceHtml((item.method || '').toUpperCase())}</span>
+          </div>
+          <div class="geo-tracking-address">${escapeAttendanceHtml(geoRecordAddress(item) || 'Address lookup unavailable')}</div>
+          <div class="geo-tracking-coords">${Number(item.latitude).toFixed(6)}, ${Number(item.longitude).toFixed(6)}</div>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  function renderGeoMap(records = []) {
+    const map = ensureGeoMap();
+    if (!map) return;
+
+    const bounds = [];
+    const allowed = getGeoAllowedState();
+
+    if (geoAllowedMarker) {
+      map.removeLayer(geoAllowedMarker);
+      geoAllowedMarker = null;
+    }
+    if (geoFenceCircle) {
+      map.removeLayer(geoFenceCircle);
+      geoFenceCircle = null;
+    }
+    if (geoCurrentMarker) {
+      map.removeLayer(geoCurrentMarker);
+      geoCurrentMarker = null;
+    }
+    if (geoTrackedLayer) geoTrackedLayer.clearLayers();
+
+    if (allowed.lat !== null && allowed.lng !== null) {
+      geoAllowedMarker = L.circleMarker([allowed.lat, allowed.lng], {
+        radius: 8,
+        color: '#79ff9b',
+        weight: 2,
+        fillColor: '#79ff9b',
+        fillOpacity: 0.95
+      }).addTo(map).bindPopup('Allowed location');
+      geoFenceCircle = L.circle([allowed.lat, allowed.lng], {
+        radius: allowed.radius,
+        color: '#79ff9b',
+        weight: 2,
+        fillColor: '#79ff9b',
+        fillOpacity: 0.08
+      }).addTo(map);
+      bounds.push([allowed.lat, allowed.lng]);
+    }
+
+    if (geoCurrentPosition && Number.isFinite(geoCurrentPosition.lat) && Number.isFinite(geoCurrentPosition.lng)) {
+      const currentCoords = geoCoordsLine(geoCurrentPosition);
+      const currentAddress = geoCurrentAddress || currentCoords;
+      geoCurrentMarker = L.circleMarker([geoCurrentPosition.lat, geoCurrentPosition.lng], {
+        radius: 8,
+        color: '#3bb0ff',
+        weight: 2,
+        fillColor: '#3bb0ff',
+        fillOpacity: 0.95
+      }).addTo(map).bindPopup(`
+        <strong>${ROLE === 'staff' ? 'Your live location' : 'Current staff location'}</strong><br>
+        ${escapeAttendanceHtml(currentAddress)}
+        ${geoCurrentAddress ? `<br><small>${escapeAttendanceHtml(currentCoords)}</small>` : ''}
+      `);
+      bounds.push([geoCurrentPosition.lat, geoCurrentPosition.lng]);
+    }
+
+    (records || []).forEach(item => {
+      const lat = Number(item.latitude);
+      const lng = Number(item.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      const isGeo = String(item.method || '').toLowerCase() === 'geo';
+      const color = isGeo ? '#f9c74f' : '#8f7dff';
+      const address = geoRecordAddress(item) || 'Address lookup unavailable';
+      const marker = L.circleMarker([lat, lng], {
+        radius: 7,
+        color,
+        weight: 2,
+        fillColor: color,
+        fillOpacity: 0.92
+      }).bindPopup(`
+        <strong>${escapeAttendanceHtml(item.full_name || 'Staff')}</strong><br>
+        ${escapeAttendanceHtml(item.subject_name || 'Work Area')}<br>
+        ${escapeAttendanceHtml((item.method || '').toUpperCase())} - ${escapeAttendanceHtml(item.time_in || '--:--')}<br>
+        ${escapeAttendanceHtml(address)}<br>
+        <small>${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
+      `);
+      geoTrackedLayer.addLayer(marker);
+      bounds.push([lat, lng]);
+    });
+
+    if (bounds.length) {
+      map.fitBounds(bounds, { padding: [28, 28], maxZoom: 17 });
+    } else {
+      map.setView([14.2787, 121.4113], 14);
+    }
+
+    const markerCount = (records || []).filter(item => hasValidCoordinates(item.latitude, item.longitude)).length;
+    if (markerCount) {
+      setGeoMapMeta(`Showing ${markerCount} staff attendance marker${markerCount === 1 ? '' : 's'} for the selected work area and date.`);
+    } else if (allowed.lat !== null && allowed.lng !== null) {
+      setGeoMapMeta(`Allowed point ready with a ${allowed.radius}m radius.`);
+    } else if (geoCurrentPosition) {
+      setGeoMapMeta('Watching your current position live.');
+    } else {
+      setGeoMapMeta('Waiting for location data...');
+    }
+  }
+
+  async function refreshGeoTrackingMap() {
+    const selectedDate = document.getElementById('geoDate')?.value || formatLocalDate();
+    const selectedSubjectId = document.getElementById('geoSubject')?.value || '';
+    if (!selectedSubjectId) {
+      renderGeoTrackingFeed([]);
+      renderGeoMap([]);
+      return;
+    }
+
+    const params = new URLSearchParams({ date: selectedDate });
+    if (ROLE === 'staff') params.set('student_id', PROFILE_ID);
+    const data = await API.get('/api/attendance?' + params.toString());
+    const records = (data || []).filter(item =>
+      String(item.subject_id || '') === String(selectedSubjectId) &&
+      hasValidCoordinates(item.latitude, item.longitude) &&
+      (ROLE !== 'staff' || String(item.student_profile_id || '') === String(PROFILE_ID))
+    );
+    await hydrateGeoRecordAddresses(records);
+    renderGeoTrackingFeed(records);
+    renderGeoMap(records);
+  }
+
+  async function captureLiveAttendancePosition(timeoutMs = 7000) {
+    if (!navigator.geolocation) return null;
+    return new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(position => {
+        const snapshot = {
+          latitude: Number(position.coords.latitude).toFixed(6),
+          longitude: Number(position.coords.longitude).toFixed(6)
+        };
+        updateGeoCurrentPosition(snapshot.latitude, snapshot.longitude, { forceAddressLookup: true });
+        resolve(snapshot);
+      }, () => resolve(null), { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 });
+    });
+  }
+
+  function startGeoWatch() {
+    if (!navigator.geolocation || geoWatchId !== null) return;
+    geoWatchId = navigator.geolocation.watchPosition(position => {
+      updateGeoCurrentPosition(position.coords.latitude, position.coords.longitude);
+    }, () => {
+      setGeoLiveMeta(`
+        <div class="geo-live-meta-card muted">
+          <span>Live Position</span>
+          <strong>Location access unavailable</strong>
+        </div>
+      `);
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+  }
+
+  function stopGeoWatch() {
+    if (geoWatchId !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(geoWatchId);
+      geoWatchId = null;
+    }
+    if (geoAddressLookupTimer) {
+      clearTimeout(geoAddressLookupTimer);
+      geoAddressLookupTimer = null;
+    }
+  }
+
+  function activateGeoExperience() {
+    ensureGeoMap();
+    startGeoWatch();
+    setTimeout(() => {
+      if (geoMap) geoMap.invalidateSize();
+      refreshGeoTrackingMap();
+    }, 120);
+  }
+
+  function configureAttendanceView() {
+    const title = document.getElementById('attendancePageTitle');
+    const qrButton = document.getElementById('tab-btn-qr');
+    const geoButton = document.getElementById('tab-btn-geo');
+    const qrPanel = document.getElementById('tab-qr');
+    const geoPanel = document.getElementById('tab-geo');
+
+    if (ROLE === 'admin') {
+      if (title) title.textContent = 'Staff Attendance';
+      qrButton?.classList.add('hidden');
+      geoButton?.classList.add('hidden');
+      qrPanel?.classList.add('hidden');
+      geoPanel?.classList.add('hidden');
+      switchTab('manual', document.getElementById('tab-btn-manual'));
+      return;
+    }
+
+    if (ROLE === 'supervisor') {
+      if (title) title.textContent = 'Staff Attendance';
+      return;
+    }
+
+    if (title) title.textContent = 'My Staff Attendance';
+  }
+
+  if (ROLE === 'staff') {
+    document.getElementById('tab-btn-manual').classList.add('hidden');
+    document.getElementById('tab-btn-qr').classList.add('hidden');
+    document.getElementById('tab-btn-myqr').classList.remove('hidden');
+    switchTab('records', document.getElementById('tab-btn-records'));
+    startMyQrRotation();
+  }
+
+  configureAttendanceView();
+
+  loadSubjects();
+  loadRecords();
+
+  async function loadSubjects() {
+    const data = await API.get('/api/subjects');
+    const manualSelect = document.getElementById('attSubject');
+    const qrSelect = document.getElementById('qrSubject');
+    const geoSelect = document.getElementById('geoSubject');
+    if (!data) return;
+
+    data.forEach(item => {
+      const label = `${item.name} (${item.code})`;
+      manualSelect.innerHTML += `<option value="${item.id}">${label}</option>`;
+      if (qrSelect) qrSelect.innerHTML += `<option value="${item.id}">${label}</option>`;
+      if (qrSelect && !qrSelect.value) qrSelect.value = item.id;
+        if (geoSelect) geoSelect.innerHTML += `<option value="${item.id}">${label}</option>`;
+        if (geoSelect && !geoSelect.value) geoSelect.value = item.id;
+      });
+
+      refreshGeoTrackingMap();
+  }
+
+  function setGeoStatus(type, message) {
+    const status = document.getElementById('geoStatus');
+    if (!status) return;
+    if (geoStatusTimer) {
+      clearTimeout(geoStatusTimer);
+      geoStatusTimer = null;
+    }
+    if (!message) {
+      status.innerHTML = '';
+      return;
+    }
+    if (type === 'error') {
+      status.innerHTML = '';
+      return;
+    }
+    status.innerHTML = `<div class="geo-status-card ${type}">${escapeAttendanceHtml(message)}</div>`;
+  }
+
+  function syncGeoRoleState() {
+    const note = document.getElementById('geoRoleNote');
+    const button = document.querySelector('.geo-checkin .btn-lg');
+    if (!note || !button) return;
+
+    if (ROLE === 'staff') {
+      note.classList.add('hidden');
+      note.textContent = '';
+      button.disabled = false;
+      button.title = '';
+      return;
+    }
+
+    note.classList.remove('hidden');
+    note.textContent = 'Supervisors can monitor live attendance pins here. Location check-in itself is available only on staff accounts.';
+    button.disabled = true;
+    button.title = 'Location check-in is available for staff only';
+    setGeoStatus('info', 'This map is locked to the Latte & Letters branch boundary. Supervisors can monitor attendance pins here, while location check-in itself remains staff-only.');
+  }
+
+  async function loadManualList() {
+    const date = document.getElementById('attDate').value;
+    const subjectId = document.getElementById('attSubject').value;
+    if (!subjectId) {
+      showToast('Select a work area first', 'error');
+      return;
+    }
+    const students = await API.get('/api/students?subject_id=' + encodeURIComponent(subjectId));
+    const existing = await API.get('/api/attendance?date=' + encodeURIComponent(date));
+    manualStudents = students || [];
+
+    const tbody = document.getElementById('manualBody');
+    if (!students || students.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-row">No staff found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = students.map(student => {
+      const attendance = existing ? existing.find(row => row.student_profile_id == student.id && (!subjectId || row.subject_id == subjectId)) : null;
+      const status = attendance ? attendance.status : 'absent';
+      const timeValue = attendance && attendance.status !== 'absent' && attendance.time_in
+        ? attendance.time_in.substring(0, 5)
+        : '';
+      return `<tr>
+        <td>${student.student_id}</td>
+        <td>${student.full_name}</td>
+        <td>
+          <select class="status-sel" id="status-${student.id}" onchange="handleManualStatusChange(${student.id})">
+            <option value="present" ${status === 'present' ? 'selected' : ''}>Present</option>
+            <option value="absent" ${status === 'absent' ? 'selected' : ''}>Absent</option>
+            <option value="late" ${status === 'late' ? 'selected' : ''}>Late</option>
+            <option value="excused" ${status === 'excused' ? 'selected' : ''}>Excused</option>
+          </select>
+        </td>
+        <td><input class="table-time-input" type="time" id="timein-${student.id}" value="${timeValue}" placeholder="Auto on save" ${status === 'absent' ? 'disabled' : ''}></td>
+        <td><input class="table-text-input" type="text" id="remarks-${student.id}" placeholder="Remarks" value="${attendance && attendance.remarks ? attendance.remarks : ''}"></td>
+        <td><button type="button" class="btn btn-sm btn-primary" onclick="saveOne(${student.id})">Save</button></td>
+      </tr>`;
+    }).join('');
+    filterManualRows();
+  }
+
+  function filterManualRows() {
+    const q = (document.getElementById('manualSearch')?.value || '').toLowerCase();
+    const status = document.getElementById('manualStatusFilter')?.value || '';
+    document.querySelectorAll('#manualBody tr').forEach(row => {
+      const select = row.querySelector('.status-sel');
+      const matchesSearch = row.textContent.toLowerCase().includes(q);
+      const matchesStatus = !status || (select && select.value === status);
+      row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    });
+  }
+
+  function getVisibleManualStudents() {
+    return manualStudents.filter(student => {
+      const select = document.getElementById('status-' + student.id);
+      const row = select ? select.closest('tr') : null;
+      return row && row.style.display !== 'none';
+    });
+  }
+
+  function markAll(status) {
+    getVisibleManualStudents().forEach(student => {
+      const select = document.getElementById('status-' + student.id);
+      if (select) {
+        select.value = status;
+        handleManualStatusChange(student.id);
+      }
+    });
+    filterManualRows();
+  }
+
+  function handleManualStatusChange(studentId) {
+    const select = document.getElementById('status-' + studentId);
+    const timeInput = document.getElementById('timein-' + studentId);
+    if (!select || !timeInput) return;
+
+    const value = select.value;
+    const needsTime = value === 'present' || value === 'late' || value === 'excused';
+    const currentValue = (timeInput.value || '').trim();
+
+    timeInput.disabled = !needsTime;
+
+    if (!needsTime) {
+      timeInput.value = '';
+      timeInput.dataset.autofilled = 'false';
+      filterManualRows();
+      return;
+    }
+
+    if (needsTime && !currentValue) {
+      timeInput.value = formatLocalTime().slice(0, 5);
+      timeInput.dataset.autofilled = 'true';
+      filterManualRows();
+      return;
+    }
+
+    if (currentValue) {
+      timeInput.dataset.autofilled = 'false';
+    }
+    filterManualRows();
+  }
+
+  async function saveOne(studentId, options = {}) {
+    handleManualStatusChange(studentId);
+    const selectedStatus = document.getElementById('status-' + studentId).value;
+    const timeInput = document.getElementById('timein-' + studentId).value;
+    if (!options.skipConfirm) {
+      const confirmed = await requestSaveConfirmation({
+        title: 'Save Attendance',
+        message: 'Do you want to save this attendance record?'
+      });
+      if (!confirmed) return false;
+    }
+    const payload = {
+      student_id: studentId,
+      subject_id: document.getElementById('attSubject').value,
+      date: document.getElementById('attDate').value,
+      time_in: selectedStatus === 'absent' ? '' : timeInput,
+      status: selectedStatus,
+      remarks: document.getElementById('remarks-' + studentId).value,
+      method: 'manual'
+    };
+    const res = await API.post('/api/attendance', payload);
+    if (res.message) {
+      if (!options.silent) showToast('Attendance saved', 'success');
+      return true;
+    }
+    showToast(res.error || 'Failed to save', 'error');
+    return false;
+  }
+
+  async function saveAllAttendance() {
+    const confirmed = await requestSaveConfirmation({
+      title: 'Save All Attendance',
+      message: 'Do you want to save all attendance records shown here?'
+    });
+    if (!confirmed) return;
+    let successCount = 0;
+    const visibleStudents = getVisibleManualStudents();
+    if (!visibleStudents.length) {
+      showToast('No visible staff to save', 'error');
+      return;
+    }
+    for (const student of visibleStudents) {
+      const saved = await saveOne(student.id, { skipConfirm: true, silent: true });
+      if (saved) successCount++;
+    }
+    if (successCount === visibleStudents.length) {
+      showToast('All attendance saved', 'success');
+    } else {
+      showToast(`${successCount} of ${visibleStudents.length} attendance records saved`, successCount ? 'success' : 'error');
+    }
+  }
+
+  async function loadRecords() {
+    let url = '/api/attendance';
+    const params = new URLSearchParams();
+    if (ROLE === 'staff') params.set('student_id', PROFILE_ID);
+    if ([...params.keys()].length) url += '?' + params.toString();
+
+    const data = await API.get(url);
+    attendanceRecords = data || [];
+    if (ROLE === 'staff') document.getElementById('actionsHeader').style.display = 'none';
+    filterRecords();
+    if (!document.getElementById('tab-geo').classList.contains('hidden')) {
+      refreshGeoTrackingMap();
+    }
+  }
+
+  function renderRecords(data) {
+    const tbody = document.getElementById('recordsBody');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-row">No records found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(item => `
+      <tr>
+        <td>${item.date}</td>
+        <td>${ROLE === 'staff' ? (item.full_name || '-') : `${item.full_name} (${item.student_id})`}</td>
+        <td>${item.subject_name}</td>
+        <td><span class="badge ${item.status}">${item.status}</span></td>
+        <td>${item.method}</td>
+        <td class="record-location-cell">${escapeAttendanceHtml(item.location_address || '-')}</td>
+        <td>${item.time_in || '-'}</td>
+        <td>${ROLE === 'staff' ? '' : `<button type="button" class="btn btn-sm btn-secondary" onclick="editRecord('${encodeURIComponent(JSON.stringify(item))}')">Edit</button>`}</td>
+      </tr>
+    `).join('');
+  }
+
+  function filterRecords() {
+    const status = (document.getElementById('recordsStatusFilter')?.value || '').toLowerCase();
+    const method = (document.getElementById('recordsMethodFilter')?.value || '').toLowerCase();
+    const filtered = attendanceRecords.filter(item => {
+      const recordStatus = String(item.status || '').toLowerCase();
+      const recordMethod = String(item.method || '').toLowerCase();
+      const matchesStatus = !status || recordStatus === status;
+      const matchesMethod = !method || recordMethod === method;
+      return matchesStatus && matchesMethod;
+    });
+    renderRecords(filtered);
+  }
+
+  function updateMyQrValidityLabel() {
+    const label = document.getElementById('myQRValidity');
+    if (!label) return;
+    label.textContent = 'No expiration';
+  }
+
+  async function startMyQrRotation() {
+    await loadMyQR();
+  }
+
+  async function loadMyQR() {
+    const data = await API.get('/api/qr');
+    if (!data || !data.qr_data) {
+      showToast('Failed to load QR code', 'error');
+      return;
+    }
+    document.getElementById('myQRName').textContent = data.name;
+    document.getElementById('myQRId').textContent = 'ID: ' + data.student_id;
+    const badge = document.getElementById('myQRBadge');
+    const hint = document.getElementById('myQRHint');
+    if (badge) badge.textContent = 'Static QR';
+    if (hint) {
+      hint.textContent = 'This QR does not expire or refresh automatically.';
+    }
+
+    const container = document.getElementById('myQRContainer');
+    container.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(container, {
+        text: data.qr_data,
+        width: 240,
+        height: 240,
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+    updateMyQrValidityLabel();
+  }
+
+  function downloadQR() {
+    const canvas = document.querySelector('#myQRContainer canvas');
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.download = 'my-qr-code.png';
+    a.href = canvas.toDataURL();
+    a.click();
+  }
+
+  async function editRecord(encoded) {
+    const item = JSON.parse(decodeURIComponent(encoded));
+    const status = prompt('New status (present/absent/late/excused):', item.status);
+    if (!status) return;
+    const res = await API.put('/api/attendance', { id: item.id, status, remarks: item.remarks || '' });
+    if (res.message) {
+      loadRecords();
+      showToast(res.message, 'success');
+    } else {
+      showToast(res.error || 'Update failed', 'error');
+    }
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.remove('hidden');
+    btn.classList.add('active');
+    if (name === 'geo') {
+      activateGeoExperience();
+      return;
+    }
+    stopGeoWatch();
+  }
+
+  function useMyLocation() {
+    setGeoStatus('info', 'Requesting your current location...');
+    navigator.geolocation.getCurrentPosition(async position => {
+      const latitude = Number(position.coords.latitude).toFixed(6);
+      const longitude = Number(position.coords.longitude).toFixed(6);
+      updateGeoCurrentPosition(latitude, longitude, { lookupAddress: false });
+      renderGeoLivePosition(true);
+      const address = await resolveGeoCurrentAddress(geoCurrentPosition, { force: true });
+      if (!address) renderGeoLivePosition(false);
+      const place = address || `${latitude}, ${longitude}`;
+      setGeoStatus('success', `Current location detected: ${place}. Attendance will still validate against the Latte & Letters branch boundary.`);
+      showToast(address ? 'Current address loaded on the map' : 'Current location loaded on the map', 'success');
+    }, (error) => {
+      const message = error && error.code === 1
+        ? 'Location access was blocked. Allow location permission in the browser and try again.'
+        : 'Unable to get your current location.';
+      setGeoStatus('error', message);
+      showToast(message, 'error');
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+  }
+
+  async function geoCheckIn() {
+    const subjectId = document.getElementById('geoSubject').value;
+    const attendanceDate = document.getElementById('geoDate').value || formatLocalDate();
+    const startedAt = Date.now();
+    const ensureGeoCheckDelay = async () => {
+      const remaining = 1500 - (Date.now() - startedAt);
+      if (remaining > 0) await wait(remaining);
+    };
+
+    if (ROLE !== 'staff') {
+      setGeoStatus('info', 'Location check-in is available on staff accounts only. Switch to a staff login to submit attendance by location.');
+      return;
+    }
+
+    if (!subjectId) {
+      setGeoStatus('error', 'Select a work area before checking in.');
+      showToast('Select a work area first', 'error');
+      return;
+    }
+
+    setGeoStatus('info', 'Checking your location, finding the address, and validating the branch zone...');
+
+    let submissionPosition = null;
+    if (geoCurrentPosition && Number.isFinite(geoCurrentPosition.lat) && Number.isFinite(geoCurrentPosition.lng)) {
+      submissionPosition = {
+        latitude: geoCurrentPosition.lat.toFixed(6),
+        longitude: geoCurrentPosition.lng.toFixed(6)
+      };
+    } else {
+      submissionPosition = await captureLiveAttendancePosition(12000);
+      if (!submissionPosition && geoCurrentPosition && Number.isFinite(geoCurrentPosition.lat) && Number.isFinite(geoCurrentPosition.lng)) {
+        submissionPosition = {
+          latitude: geoCurrentPosition.lat.toFixed(6),
+          longitude: geoCurrentPosition.lng.toFixed(6)
+        };
+      }
+    }
+
+    if (!submissionPosition) {
+      await ensureGeoCheckDelay();
+      const message = 'Unable to confirm your live location right now. Wait for the live position to appear, then try again.';
+      setGeoStatus('error', message);
+      showToast(message, 'error');
+      return;
+    }
+
+    updateGeoCurrentPosition(submissionPosition.latitude, submissionPosition.longitude, { lookupAddress: false });
+    renderGeoLivePosition(true);
+    const locationAddress = await resolveGeoCurrentAddress(geoCurrentPosition, { force: true });
+    if (!locationAddress) renderGeoLivePosition(false);
+
+    const res = await API.post('/api/attendance', {
+      student_id: PROFILE_ID,
+      subject_id: subjectId,
+      date: attendanceDate,
+      time_in: formatLocalTime(),
+      status: 'present',
+      method: 'geo',
+      latitude: submissionPosition.latitude,
+      longitude: submissionPosition.longitude,
+      location_address: locationAddress || '',
+      allowed_latitude: LU_CAMPUS.lat,
+      allowed_longitude: LU_CAMPUS.lng,
+      radius_meters: LU_CAMPUS.radius
+    });
+
+    await ensureGeoCheckDelay();
+
+    if (res.message) {
+      setGeoStatus('success', locationAddress
+        ? `Location verified at ${locationAddress}. Attendance marked successfully.`
+        : 'Location verified. Attendance marked successfully.');
+      showToast('Attendance marked via geo-location', 'success');
+      loadRecords();
+      refreshGeoTrackingMap();
+    } else {
+      setGeoStatus('error', res.error || 'Geo check-in failed');
+      showToast(res.error || 'Geo check-in failed', 'error');
+    }
+  }
+
+  ['geoDate', 'geoSubject'].forEach(id => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.addEventListener(id === 'geoSubject' || id === 'geoDate' ? 'change' : 'input', () => {
+      refreshGeoTrackingMap();
+    });
+  });
+
+  syncGeoRoleState();
+</script>
+</body>
+</html>
+
+

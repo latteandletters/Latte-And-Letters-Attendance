@@ -1,0 +1,5 @@
+config.local.properties
+out/
+bin/
+server.out.log
+server.err.log
