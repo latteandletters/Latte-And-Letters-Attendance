@@ -17,7 +17,7 @@ final class ValidationUtils {
     private static final Pattern TOP_LEVEL_LABEL_PATTERN = Pattern.compile("^[A-Za-z]{2,10}$");
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]{3,30}$");
     private static final Pattern NAME_PATTERN = Pattern.compile("^[A-Za-z .,'-]{2,80}$");
-    private static final Pattern ADDRESS_COMPONENT_PATTERN = Pattern.compile("^[A-Za-zÀ-ÿ0-9 .,'()/-]{2,100}$");
+    private static final Pattern ADDRESS_COMPONENT_PATTERN = Pattern.compile("^[A-Za-z\u00C0-\u00FF0-9 .,'()/-]{2,100}$");
     private static final Pattern COURSE_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9 .,&()/-]{1,119}$");
     private static final Pattern SECTION_PATTERN = Pattern.compile("^[A-Za-z0-9][A-Za-z0-9 .()/-]{0,39}$");
     private static final Pattern SUBJECT_CODE_PATTERN = Pattern.compile("^[A-Za-z0-9][A-Za-z0-9-]{1,19}$");
